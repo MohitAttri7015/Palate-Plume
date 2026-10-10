@@ -52,7 +52,7 @@ export default function Nav() {
             <nav
                 className={`fixed left-1/2 top-5 z-50
           -translate-x-1/2 overflow-hidden
-          border-1 border-[#26262E]
+          border border-[#26262E]
           shadow-[0_4px_30px_rgba(0,0,0,0.04)]
           transition-[width,height,border-radius,top]
           duration-700 ease-[cubic-bezier(0.22,1,0.36,1)]
