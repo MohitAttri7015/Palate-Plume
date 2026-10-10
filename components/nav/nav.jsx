@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useEffect, useState } from 'react';
@@ -19,17 +18,37 @@ export default function Nav() {
     useEffect(() => {
         if (!isOpen) return;
 
-        const previousOverflow = document.body.style.overflow;
-        document.body.style.overflow = 'hidden';
+        const html = document.documentElement;
+        const body = document.body;
+        const previousHtmlOverflow = html.style.overflow;
+        const previousBodyOverflow = body.style.overflow;
+
+        // 1) Native scrolling: lock BOTH html and body. If html has its own overflow
+        //    rule (e.g. overflow-x: hidden in globals.css), locking only body does nothing.
+        html.style.overflow = 'hidden';
+        body.style.overflow = 'hidden';
+
+        // 2) Smooth-scroll libraries (Lenis etc.) move the page with JavaScript, so
+        //    overflow:hidden does not stop them. Catch wheel/touch first and cancel it
+        //    before the library ever sees it.
+        const blockScroll = (event) => {
+            event.preventDefault();
+            event.stopPropagation();
+        };
+        const blockOptions = { passive: false, capture: true };
+        window.addEventListener('wheel', blockScroll, blockOptions);
+        window.addEventListener('touchmove', blockScroll, blockOptions);
 
         const handleKeyDown = (event) => {
             if (event.key === 'Escape') setIsOpen(false);
         };
-
         window.addEventListener('keydown', handleKeyDown);
 
         return () => {
-            document.body.style.overflow = previousOverflow;
+            html.style.overflow = previousHtmlOverflow;
+            body.style.overflow = previousBodyOverflow;
+            window.removeEventListener('wheel', blockScroll, blockOptions);
+            window.removeEventListener('touchmove', blockScroll, blockOptions);
             window.removeEventListener('keydown', handleKeyDown);
         };
     }, [isOpen]);
