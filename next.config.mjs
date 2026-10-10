@@ -4,6 +4,15 @@ const nextConfig = {
   experimental: {
     agentFeedback: true,
   },
+  images: {
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'images.unsplash.com',
+      },
+    ],
+  },
+  allowedDevOrigins: ['192.168.1.10'],
   cacheComponents: true,
   partialPrefetching: true,
   turbopack: {
