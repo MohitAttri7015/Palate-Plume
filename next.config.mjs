@@ -12,7 +12,7 @@ const nextConfig = {
       },
     ],
   },
-  allowedDevOrigins: ['192.168.1.10'],
+  allowedDevOrigins: ['192.168.1.12'],
   cacheComponents: true,
   partialPrefetching: true,
   turbopack: {

@@ -55,7 +55,7 @@ export default function FeatureTasting(){
         <div className="text-white mt-[5rem] sm:px-12 px-4 py-8 flex flex-col gap-15">
             <div className="flex gap-4 flex-row items-center">
                 <span className="w-2 h-2 bg-white"></span>
-                <p className="font-ui text-[12px] tracking-[5px]">FEATURED TASTING</p>
+                <p className="font-ui text-[12px] tracking-[5px] uppercase">FEATURED TASTING</p>
             </div>
 
             <CustomSlider
@@ -64,7 +64,6 @@ export default function FeatureTasting(){
                 headerButtonText="VIEW ALL"
                 headerButtonLink="/menu"
                 products={tastingProducts}
-                productBasePath="/menu"
                 currency="₹"
             />
             

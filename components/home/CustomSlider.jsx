@@ -40,7 +40,6 @@ export default function CustomSlider({
     headerButtonText = 'VIEW ALL',
     headerButtonLink = '/',
     products = [],
-    productBasePath = '/menu',
     currency = '₹',
     options = {},
     className = '',
