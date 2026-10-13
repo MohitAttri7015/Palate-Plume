@@ -67,7 +67,7 @@ export default function Footer() {
 
                     {/* Bottom bar */}
                     <div className="relative z-10 mx-auto flex w-full max-w-[50rem] flex-col items-center justify-between gap-1 rounded-3xl bg-[#ebe9e7] md:px-6 px-2 py-4 text-center font-ui md:text-[13px] text-[11px] text-[#16161A] font-medium sm:flex-row sm:rounded-full sm:text-left">
-                        <p>&copy;{new Date().getFullYear()} Palate &amp; Plume. All Rights Reserved.</p>
+                        <p>&copy;2026 Palate &amp; Plume. All Rights Reserved.</p>
                         <p>Created by <Link href="https://lark-heaven.vercel.app/" target="_blank" rel="noopener noreferrer" className="underline">
                             LarkHeaven
                         </Link></p>
