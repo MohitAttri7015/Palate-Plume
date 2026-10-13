@@ -14,7 +14,7 @@
 }
 
 @theme {
-  --breakpoint-mobile: 350px;
+  --breakpoint-mobile: 375px;
 }
 
 * {

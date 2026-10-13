@@ -14,7 +14,7 @@ const CARD_WIDTH = 'w-[70vw] sm:w-[44vw] md:w-[32vw] lg:w-[25vw] xl:w-[22vw]';
 
 // CARD HEIGHT: change it here, it applies to the header card AND every product card.
 // Responsive example: 'h-[24rem] sm:h-[30rem] lg:h-[36rem]'
-const CARD_HEIGHT = 'h-[30rem] lg:h-[34rem]';
+const CARD_HEIGHT = 'mobile:h-[30rem] h-[25rem] lg:h-[34rem]';
 
 // Tells next/image how wide each card really is, so it doesn't download oversized images.
 // Keep in sync with CARD_WIDTH.
@@ -70,7 +70,9 @@ export default function CustomSlider({
                         className={`relative flex shrink-0 grow-0 items-center justify-center overflow-hidden bg-neutral-800 ${CARD_HEIGHT} ${CARD_WIDTH}`}
                     >
                         {headerImage && (
-                            <img
+                            <Image
+                                fill
+                                sizes={IMG_SIZES}
                                 src={headerImage}
                                 alt=""
                                 draggable={false}

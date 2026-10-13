@@ -1,4 +1,5 @@
 import Nav from "@/components/nav/nav";
+import Footer from "@/components/footer/footer";
 
 export const metadata = {
     title: {
@@ -29,6 +30,10 @@ export default function GuestLayout({ children }) {
             </header>
 
             {children}
+
+            <footer>
+                <Footer />
+            </footer>
         </div>
     );
 }
