@@ -100,3 +100,21 @@ body::-webkit-scrollbar {
 .group:hover .cart-icon {
   animation: cart-bounce 0.5s ease-in-out;
 }
+
+
+.ferrofluid-container {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+
+.side-rays-container {
+  width: 100%;
+  height: 100%;
+  position: relative;
+  pointer-events: none;
+  z-index: 3;
+  overflow: hidden;
+}
