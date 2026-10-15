@@ -1,3 +1,5 @@
+import { Suspense } from 'react';
+import { getSession } from "@/lib/auth"
 import Nav from "@/components/nav/nav";
 import Footer from "@/components/footer/footer";
 
@@ -22,11 +24,19 @@ export const metadata = {
     },
 };
 
+
+async function NavbarWrapper() {
+    const session = await getSession();
+    return <Nav initialSession={session} />;
+}
 export default function GuestLayout({ children }) {
+
     return (
         <div className="w-full">
             <header>
-                <Nav />
+                <Suspense fallback={<div className="flex h-[60px] items-center justify-center bg-black text-white">Loading...</div>}>
+                    <NavbarWrapper />
+                </Suspense>
             </header>
 
             {children}

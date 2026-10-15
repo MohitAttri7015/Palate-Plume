@@ -1,19 +1,26 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { ShoppingCart } from 'lucide-react';
+import { ShoppingCart, Plus, UtensilsCrossed } from 'lucide-react';
 import Link from 'next/link';
 import '@/app/globals.css'
 import Image from 'next/image';
 
-const links = [
-    { label: 'Location & Hours', href: '#location' },
+const userLinks = [
+    { label: 'Location & Hours', href: '/timing' },
     { label: 'Enter Table #', href: '#table' },
-    { label: 'Menu', href: '#menu' },
+    { label: 'Menu', href: '/menu' },
 ];
 
-export default function Nav() {
+const adminLinks = [
+    { label: 'Location & Hours', href: '/timing' },
+    { label: 'See Orders', href: '/admin/orders' },
+    { label: 'Menu', href: '/menu' },
+];
+
+export default function Nav({ initialSession = null }) {
     const [isOpen, setIsOpen] = useState(false);
+    const [user] = useState(initialSession);
 
     useEffect(() => {
         if (!isOpen) return;
@@ -84,17 +91,31 @@ export default function Nav() {
                 {/* Header */}
                 <div className="relative flex h-[60px] shrink-0 items-center justify-between p-4 text-white">
                     {/* Cart icon */}
-                    <button
-                        type="button"
-                        aria-label="Shopping cart"
+                    <Link
+                        aria-label={user?.role === 'admin' ? 'Add new item' : user?.role === 'staff' ? 'Staff tools' : 'View cart'}
+                        href={user?.role === 'admin' ? '/admin/addItem' : user?.role === 'staff' ? '/admin/orders' : '/cart'}
                         className="group flex h-10 w-10 shrink-0 items-center justify-center"
                     >
-                        <ShoppingCart
-                            size={20}
-                            strokeWidth={2}
-                            className="cart-icon transition-transform duration-800 group-hover:scale-110 cursor-pointer"
-                        />
-                    </button>
+                        {user?.role === 'admin' ? (
+                            <Plus
+                                size={20}
+                                strokeWidth={2}
+                                className="transition-transform duration-300 group-hover:scale-110"
+                            />
+                        ) : user?.role === 'staff' ? (
+                            <UtensilsCrossed
+                                size={20}
+                                strokeWidth={2}
+                                className="transition-transform duration-300 group-hover:scale-110"
+                            />
+                        ) : (
+                            <ShoppingCart
+                                size={20}
+                                strokeWidth={2}
+                                className="cart-icon transition-transform duration-300 group-hover:scale-110"
+                            />
+                        )}
+                    </Link>
 
                     {/* Center brand */}
                     <Link
@@ -140,16 +161,16 @@ export default function Nav() {
 
                     <div className="flex md:flex-row flex-col md:justify-between w-full md:h-50 h-full">
                         <div className="flex min-h-0 flex-1 flex-col gap-1">
-                            {links.map((link, index) => (
+                            {(user?.role === 'admin' || user?.role === 'staff' ? adminLinks : userLinks).map((link, index) => (
                                 <a
                                     key={link.label}
                                     href={link.href}
                                     onClick={() => setIsOpen(false)}
                                     style={{ transitionDelay: isOpen ? `${index * 70}ms` : '0ms' }}
                                     className="group flex w-fit items-center py-1
-                  md:text-[clamp(23px,4vw,1px)] text-[clamp(18px,4vw,1px)] 
-                  tracking-[-1px] transition-all duration-300
-                  hover:translate-x-2 hover:text-white/50"
+        md:text-[clamp(23px,4vw,1px)] text-[clamp(18px,4vw,1px)] 
+        tracking-[-1px] transition-all duration-300
+        hover:translate-x-2 hover:text-white/50"
                                 >
                                     <span>{link.label}</span>
                                 </a>
