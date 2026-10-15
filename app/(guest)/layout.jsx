@@ -34,7 +34,7 @@ export default function GuestLayout({ children }) {
     return (
         <div className="w-full">
             <header>
-                <Suspense fallback={<div className="flex h-[60px] items-center justify-center bg-black text-white">Loading...</div>}>
+                <Suspense fallback={<div></div>}>
                     <NavbarWrapper />
                 </Suspense>
             </header>
