@@ -93,7 +93,7 @@ export default function Nav({ initialSession = null }) {
                     {/* Cart icon */}
                     <Link
                         aria-label={user?.role === 'admin' ? 'Add new item' : user?.role === 'staff' ? 'Staff tools' : 'View cart'}
-                        href={user?.role === 'admin' ? '/admin/addItem' : user?.role === 'staff' ? '/admin/orders' : '/cart'}
+                        href={user?.role === 'admin' ? '/admin/menu/new' : user?.role === 'staff' ? '/admin/orders' : '/cart'}
                         className="group flex h-10 w-10 shrink-0 items-center justify-center"
                     >
                         {user?.role === 'admin' ? (
