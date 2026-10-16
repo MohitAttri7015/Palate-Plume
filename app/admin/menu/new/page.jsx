@@ -44,7 +44,7 @@ async function NewItem() {
             </div>
             <div className="mx-auto flex max-w-xl flex-col gap-8 relative z-20">
                 <div>
-                    <Link href="/admin" className="text-sm text-white/60 hover:text-white">
+                    <Link href="/" className="text-sm text-white/60 hover:text-white">
                         Back to home
                     </Link>
                     <h1 className="sr-only">Add menu items and categories</h1>
