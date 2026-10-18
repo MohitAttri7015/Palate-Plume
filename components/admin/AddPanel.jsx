@@ -8,9 +8,16 @@ const TABS = [
     { id: "category", label: "Add new category", text: "Categories group your menu, for example Coffee, Snacks or Desserts." },
 ];
 
-export default function AddPanel() {
+export default function AddPanel({ initialCategories = [] }) {
     const [tab, setTab] = useState("item");
+    // The list of categories lives HERE, so both forms can use it.
+    const [categories, setCategories] = useState(initialCategories);
     const active = TABS.find((t) => t.id === tab);
+
+    // Called by the category form when a new category was saved.
+    function handleCategoryCreated(category) {
+        setCategories((list) => [...list, category]);
+    }
 
     return (
         <div className="flex w-full flex-col gap-8">
@@ -36,10 +43,10 @@ export default function AddPanel() {
 
             {/* Both forms stay on the page; only one is shown. So what you typed is not lost when you switch. */}
             <div hidden={tab !== "item"}>
-                <ItemForm />
+                <ItemForm categories={categories} />
             </div>
             <div hidden={tab !== "category"}>
-                <CategoryForm />
+                <CategoryForm onCreated={handleCategoryCreated} />
             </div>
         </div>
     );

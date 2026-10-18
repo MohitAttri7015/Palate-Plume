@@ -4,8 +4,11 @@ import { Suspense } from "react";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth";
+import { connectDB } from "@/lib/db";
 import { LOGIN_PATH, STAFF_HOME } from "@/lib/config";
+import Category from "@/models/Category";
 import AddPanel from "@/components/admin/AddPanel";
+
 
 export default function NewItemPage() {
     return (
@@ -19,6 +22,18 @@ async function NewItem() {
     const session = await getSession();
     if (!session) redirect(LOGIN_PATH);
     if (session.role !== "admin") redirect(STAFF_HOME);
+
+    // Load THIS cafe's categories (cafeId comes from the login) for the dropdown.
+    let categories = [];
+    let loadError = false;
+    try {
+        await connectDB();
+        const rows = await Category.find({ cafeId: session.cafeId }).sort({ sortOrder: 1, name: 1 }).lean();
+        categories = rows.map((c) => ({ id: String(c._id), name: c.name })); // plain text ids can be passed to the form
+    } catch (err) {
+        console.error("Load categories error:", err);
+        loadError = true;
+    }
 
     return (
         <main className="min-h-screen bg-[#0A0A0C] px-4 py-10 font-ui text-white relative">
@@ -50,7 +65,7 @@ async function NewItem() {
                     <h1 className="sr-only">Add menu items and categories</h1>
                 </div>
 
-                <AddPanel />
+                <AddPanel initialCategories={categories} />
             </div>
         </main>
     );
