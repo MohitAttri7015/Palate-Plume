@@ -1,7 +1,8 @@
 "use client";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { Field, inputClass } from "@/components/admin/FormParts";
 import ImageField from "@/components/admin/ImageField";
+import { uploadImage } from "@/lib/uploadImage";
 
 export default function ItemForm({ categories = [] }) {
     const [categoryId, setCategoryId] = useState("");
@@ -11,7 +12,20 @@ export default function ItemForm({ categories = [] }) {
     const [mainImage, setMainImage] = useState(null);
     const [secondImage, setSecondImage] = useState(null);
     const [errors, setErrors] = useState({});
+    const [formError, setFormError] = useState("");
     const [message, setMessage] = useState("");
+    const [busy, setBusy] = useState(false); // true while uploading or saving
+    const [status, setStatus] = useState(""); // what we are doing right now, e.g. "Uploading the main picture..."
+
+    // Remembers pictures that were already uploaded, so if saving fails and you
+    // press Save again, the same picture is not uploaded twice.
+    const uploaded = useRef(new WeakMap());
+    async function uploadOnce(file) {
+        if (uploaded.current.has(file)) return uploaded.current.get(file);
+        const result = await uploadImage(file);
+        uploaded.current.set(file, result);
+        return result;
+    }
 
     // Checks the form. Gives back something like { name: "message", price: "message" }.
     // An empty result means everything is fine.
@@ -31,140 +45,196 @@ export default function ItemForm({ categories = [] }) {
     // When someone starts fixing a field, remove its red message.
     const clearError = (key) => setErrors((prev) => (prev[key] ? { ...prev, [key]: undefined } : prev));
 
-    function handleSubmit(e) {
+    async function handleSubmit(e) {
         e.preventDefault(); // stops the page from reloading
+        if (busy) return; // ignore a second click
         setMessage("");
+        setFormError("");
 
         const found = validate();
         setErrors(found);
         if (Object.keys(found).length > 0) return; // stop here, the red messages explain why
 
-        console.log("Form data:", {
-            categoryId,
-            name: name.trim(),
-            description: description.trim(),
-            price: price.trim(),
-            mainImage: { name: mainImage.name, size: mainImage.size },
-            secondImage:{ name: secondImage.name, size: secondImage.size }
-        });
-        setMessage("The form works! It is not saved yet. Saving comes in a later step.");
+        setBusy(true);
+        try {
+            // Upload the pictures to ImageKit
+            setStatus("Uploading the main picture...");
+            const main = await uploadOnce(mainImage);
+
+            let second = null;
+            if (secondImage) {
+                setStatus("Uploading the second picture...");
+                second = await uploadOnce(secondImage);
+            }
+
+            // Save the item. The server checks everything again.
+            setStatus("Saving the item...");
+            const res = await fetch("/api/admin/items", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    categoryId,
+                    name: name.trim(),
+                    description: description.trim(),
+                    price: price.trim(),
+                    mainImage: { url: main.url, fileId: main.fileId },
+                    secondImage: second ? { url: second.url, fileId: second.fileId } : null,
+                }),
+            });
+            const data = await res.json().catch(() => ({}));
+
+            if (!res.ok) {
+                setErrors(data.fieldErrors || {});
+                setFormError(data.error || "Could not save the item. Please try again.");
+                // If the server did not accept a picture, forget it so the next try uploads it again.
+                if (data.fieldErrors?.mainImage) uploaded.current.delete(mainImage);
+                if (data.fieldErrors?.secondImage && secondImage) uploaded.current.delete(secondImage);
+                return;
+            }
+
+            // Saved! Clear the form for the next item (the category stays selected).
+            setMessage(`"${data.item.name}" was saved to your menu.`);
+            setName("");
+            setDescription("");
+            setPrice("");
+            setMainImage(null);
+            setSecondImage(null);
+            setErrors({});
+
+        } catch (err) {
+            setFormError(err.message || "Something went wrong. Please try again.");
+        } finally {
+            setBusy(false);
+            setStatus("");
+        }
     }
 
     return (
         <form onSubmit={handleSubmit} noValidate className="flex w-full max-w-xl flex-col gap-6 font-ui text-white">
-            <Field
-                id="category"
-                label="Category"
-                error={errors.categoryId}
-                hint={categories.length === 0 ? 'No categories yet. Click "Add new category" above to create one.' : "Where this item appears on the menu."}
-            >
-                <select
+            {/* While busy, everything inside this fieldset is locked. */}
+            <fieldset disabled={busy} className="m-0 flex min-w-0 flex-col gap-6 border-0 p-0">
+                <Field
                     id="category"
-                    value={categoryId}
-                    onChange={(e) => {
-                        setCategoryId(e.target.value);
-                        clearError("categoryId");
-                    }}
-                    aria-invalid={errors.categoryId ? true : undefined}
-                    aria-describedby={errors.categoryId ? "category-error" : undefined}
-                    className={inputClass + " bg-[#0A0A0C]"}
+                    label="Category"
+                    error={errors.categoryId}
+                    hint={categories.length === 0 ? 'No categories yet. Click "Add new category" above to create one.' : "Where this item appears on the menu."}
                 >
-                    <option value="" className="bg-[#0A0A0C]">Choose a category...</option>
-                    {categories.map((c) => (
-                        <option key={c.id} value={c.id} className="bg-[#0A0A0C]">{c.name}</option>
-                    ))}
-                </select>
-            </Field>
-
-            <Field id="name" label="Item name" error={errors.name}>
-                <input
-                    id="name"
-                    type="text"
-                    maxLength={80}
-                    value={name}
-                    onChange={(e) => {
-                        setName(e.target.value);
-                        clearError("name");
-                    }}
-                    placeholder="e.g. Cappuccino"
-                    aria-invalid={errors.name ? true : undefined}
-                    aria-describedby={errors.name ? "name-error" : undefined}
-                    className={inputClass}
-                />
-            </Field>
-
-            <Field id="description" label="Description" error={errors.description} hint={`${description.length}/300`}>
-                <textarea
-                    id="description"
-                    rows={3}
-                    maxLength={300}
-                    value={description}
-                    onChange={(e) => {
-                        setDescription(e.target.value);
-                        clearError("description");
-                    }}
-                    placeholder="A short line customers will read, e.g. Double espresso with steamed milk foam."
-                    aria-invalid={errors.description ? true : undefined}
-                    aria-describedby={errors.description ? "description-error" : undefined}
-                    className={inputClass + " resize-none"}
-                />
-            </Field>
-
-            <Field id="price" label="Price" error={errors.price} hint="In rupees. For example 149 or 149.50">
-                <div className="relative">
-                    <span className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-sm text-white/50">₹</span>
-                    <input
-                        id="price"
-                        type="text"
-                        inputMode="decimal"
-                        maxLength={9}
-                        value={price}
+                    <select
+                        id="category"
+                        value={categoryId}
                         onChange={(e) => {
-                            setPrice(e.target.value.replace(/[^\d.]/g, ""));
-                            clearError("price");
+                            setCategoryId(e.target.value);
+                            clearError("categoryId");
                         }}
-                        aria-invalid={errors.price ? true : undefined}
-                        aria-describedby={errors.price ? "price-error" : undefined}
-                        className={inputClass + " pl-9"}
+                        aria-invalid={errors.categoryId ? true : undefined}
+                        aria-describedby={errors.categoryId ? "category-error" : undefined}
+                        className={inputClass + " bg-[#0A0A0C]"}
+                    >
+                        <option value="" className="bg-[#0A0A0C]">Choose a category...</option>
+                        {categories.map((c) => (
+                            <option key={c.id} value={c.id} className="bg-[#0A0A0C]">{c.name}</option>
+                        ))}
+                    </select>
+                </Field>
+
+                <Field id="name" label="Item name" error={errors.name}>
+                    <input
+                        id="name"
+                        type="text"
+                        maxLength={80}
+                        value={name}
+                        onChange={(e) => {
+                            setName(e.target.value);
+                            clearError("name");
+                        }}
+                        placeholder="e.g. Cappuccino"
+                        aria-invalid={errors.name ? true : undefined}
+                        aria-describedby={errors.name ? "name-error" : undefined}
+                        className={inputClass}
                     />
-                </div>
-            </Field>
+                </Field>
 
-            <ImageField
-                id="mainImage"
-                label="Main picture"
-                hint="The big photo customers see first."
-                file={mainImage}
-                onChange={(f) => {
-                    setMainImage(f);
-                    clearError("mainImage");
-                }}
-                error={errors.mainImage}
-            />
+                <Field id="description" label="Description" error={errors.description} hint={`${description.length}/300`}>
+                    <textarea
+                        id="description"
+                        rows={3}
+                        maxLength={300}
+                        value={description}
+                        onChange={(e) => {
+                            setDescription(e.target.value);
+                            clearError("description");
+                        }}
+                        placeholder="A short line customers will read, e.g. Double espresso with steamed milk foam."
+                        aria-invalid={errors.description ? true : undefined}
+                        aria-describedby={errors.description ? "description-error" : undefined}
+                        className={inputClass + " resize-none"}
+                    />
+                </Field>
 
-            <ImageField
-                id="secondImage"
-                label="Second picture"
-                hint="A second angle or a closer look."
-                file={secondImage}
-                onChange={(f) => {
-                    setSecondImage(f);
-                    clearError("secondImage");
-                }}
-                error={errors.secondImage}
-            />
+                <Field id="price" label="Price" error={errors.price} hint="In rupees. For example 149 or 149.50">
+                    <div className="relative">
+                        <span className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-sm text-white/50">₹</span>
+                        <input
+                            id="price"
+                            type="text"
+                            inputMode="decimal"
+                            maxLength={9}
+                            value={price}
+                            onChange={(e) => {
+                                setPrice(e.target.value.replace(/[^\d.]/g, ""));
+                                clearError("price");
+                            }}
+                            aria-invalid={errors.price ? true : undefined}
+                            aria-describedby={errors.price ? "price-error" : undefined}
+                            className={inputClass + " pl-9"}
+                        />
+                    </div>
+                </Field>
 
-            {message && (
-                <p role="status" className="rounded-lg border border-green-400/40 bg-green-500/10 px-4 py-3 text-sm text-green-200">
-                    {message}
-                </p>
-            )}
+                <ImageField
+                    id="mainImage"
+                    label="Main picture"
+                    hint="The big photo customers see first."
+                    file={mainImage}
+                    onChange={(f) => {
+                        setMainImage(f);
+                        clearError("mainImage");
+                    }}
+                    error={errors.mainImage}
+                />
+
+                <ImageField
+                    id="secondImage"
+                    label="Second picture (optional)"
+                    hint="A second angle or a closer look."
+                    file={secondImage}
+                    onChange={(f) => {
+                        setSecondImage(f);
+                        clearError("secondImage");
+                    }}
+                    error={errors.secondImage}
+                />
+            </fieldset>
+
+            <div aria-live="polite" className="flex flex-col gap-3">
+                {formError && (
+                    <p role="alert" className="rounded-lg border border-red-400/40 bg-red-500/10 px-4 py-3 text-sm text-red-200">
+                        {formError}
+                    </p>
+                )}
+                {message && (
+                    <p role="status" className="rounded-lg border border-green-400/40 bg-green-500/10 px-4 py-3 text-sm text-green-200">
+                        {message}
+                    </p>
+                )}
+            </div>
 
             <button
                 type="submit"
-                className="flex w-full cursor-pointer items-center justify-center rounded-full border border-white py-3 text-sm font-medium transition-all duration-300 hover:bg-white hover:text-black"
+                disabled={busy}
+                className="flex w-full cursor-pointer items-center justify-center rounded-full border border-white py-3 text-sm font-medium transition-all duration-300 hover:bg-white hover:text-black disabled:cursor-not-allowed disabled:opacity-70"
             >
-                Save item
+                {busy ? status || "Working..." : "Save item"}
             </button>
         </form>
     );

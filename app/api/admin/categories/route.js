@@ -2,16 +2,16 @@ import { NextResponse } from "next/server";
 import { connectDB } from "@/lib/db";
 import { categorySchema, tidy } from "@/lib/validation";
 import Category from "@/models/Category";
-import { getSession } from "@/lib/auth";
+import { requireAdmin } from "@/lib/requireAdmin";
+
 
 const json = (body, status = 200) => NextResponse.json(body, { status, headers: { "Cache-Control": "no-store" } });
 
 // Create a category. The browser sends: { "name": "Coffee" }
 export async function POST(request) {
-    // 1) Check the user is logged in and is an admin.
-    const session = await getSession();
-    if (!session) return json({ error: "You must be logged in to do that." }, 401);
-    if (session.role !== "admin") return json({ error: "You don't have permission to do that." }, 403);
+
+    const { session, error } = await requireAdmin();
+    if (error) return error;
     
     let body;
     try {
