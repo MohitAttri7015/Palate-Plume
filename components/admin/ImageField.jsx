@@ -2,7 +2,9 @@
 import { useEffect, useRef, useState } from "react";
 import { Field } from "@/components/admin/FormParts";
 
-const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp"];
+
+const ALLOWED_TYPES = ["image/jpeg", "image/pjpeg", "image/png", "image/webp"];
+const ALLOWED_ENDINGS = /\.(jpe?g|jfif|png|webp)$/i;
 const MAX_MB = 5;
 
 // A picture chooser with a preview.
@@ -28,7 +30,7 @@ export default function ImageField({ id, label, hint, file, onChange, error }) {
         e.target.value = ""; // so you can choose the same file again later
         if (!chosen) return;
 
-        if (!ALLOWED_TYPES.includes(chosen.type)) {
+        if (!ALLOWED_TYPES.includes(chosen.type) && !ALLOWED_ENDINGS.test(chosen.name)) {
             return setLocalError("Please choose a JPG, PNG or WebP picture.");
         }
         if (chosen.size > MAX_MB * 1024 * 1024) {
@@ -47,7 +49,7 @@ export default function ImageField({ id, label, hint, file, onChange, error }) {
                 ref={inputRef}
                 id={id}
                 type="file"
-                accept="image/jpeg,image/png,image/webp"
+                accept="image/jpeg,image/png,image/webp,.jfif"
                 onChange={handleChange}
                 tabIndex={-1}
                 aria-invalid={shownError ? true : undefined}
