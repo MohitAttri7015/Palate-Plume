@@ -6,86 +6,6 @@ import Image from 'next/image';
 import useEmblaCarousel from 'embla-carousel-react';
 import { ShoppingBasket } from 'lucide-react';
 
-const categoriesData = [
-    {
-        name: "Chef's Signatures",
-        slug: 'chefs-signatures',
-        image: 'https://images.unsplash.com/photo-1544025162-d76694265947?q=80&w=800',
-        items: [
-            { name: 'A5 Miyazaki Wagyu Carpaccio', category: "Chef's Signatures", price: 2800 },
-            { name: 'Hokkaido Scallop Crudo', category: "Chef's Signatures", price: 2200 },
-            { name: 'Truffle Infused Wild Mushroom Velouté', category: "Chef's Signatures", price: 1600 },
-            { name: 'Oscietra Caviar Tartlet', category: "Chef's Signatures", price: 3500 },
-            { name: 'Glazed Sweetbreads with Morels', category: "Chef's Signatures", price: 2400 },
-            { name: 'Foie Gras Torchon & Brioche', category: "Chef's Signatures", price: 2600 },
-        ],
-    },
-    {
-        name: 'Grill & Embers',
-        slug: 'grill-and-embers',
-        image: 'https://images.unsplash.com/photo-1558030006-450675393462?q=80&w=800',
-        items: [
-            { name: 'Binchotan Grilled Tomahawk', category: 'Grill & Embers', price: 6500 },
-            { name: 'New Zealand Lamb Cutlets', category: 'Grill & Embers', price: 3200 },
-            { name: 'Charred Chilean Sea Bass', category: 'Grill & Embers', price: 3800 },
-            { name: "Smoked Duck Breast à l'Orange", category: 'Grill & Embers', price: 2900 },
-            { name: 'Kurobuta Pork Belly Confit', category: 'Grill & Embers', price: 2700 },
-            { name: 'Roasted King Oyster Mushrooms', category: 'Grill & Embers', price: 1800 },
-        ],
-    },
-    {
-        name: 'Artisanal Desserts',
-        slug: 'artisanal-desserts',
-        image: 'https://images.unsplash.com/photo-1551024709-8f23befc6f87?q=80&w=800',
-        items: [
-            { name: 'Valrhona Dark Chocolate Soufflé', category: 'Artisanal Desserts', price: 1400 },
-            { name: 'Madagascan Vanilla Bean Panna Cotta', category: 'Artisanal Desserts', price: 1200 },
-            { name: 'Yuzu Citrus Tart with Meringue', category: 'Artisanal Desserts', price: 1300 },
-            { name: 'Deconstructed Mille-Feuille', category: 'Artisanal Desserts', price: 1500 },
-            { name: 'Artisanal Cheese & Honey Selection', category: 'Artisanal Desserts', price: 2100 },
-            { name: 'Smoked Earl Grey Ganache', category: 'Artisanal Desserts', price: 1350 },
-        ]
-    },
-    {
-        name: 'Artisanal Desserts',
-        slug: 'artisanal-desserts-top',
-        image: 'https://images.unsplash.com/photo-1551024709-8f23befc6f87?q=80&w=800',
-        items: [
-            { name: 'Valrhona Dark Chocolate Soufflé', category: 'Artisanal Desserts', price: 1400 },
-            { name: 'Madagascan Vanilla Bean Panna Cotta', category: 'Artisanal Desserts', price: 1200 },
-            { name: 'Yuzu Citrus Tart with Meringue', category: 'Artisanal Desserts', price: 1300 },
-            { name: 'Deconstructed Mille-Feuille', category: 'Artisanal Desserts', price: 1500 },
-            { name: 'Artisanal Cheese & Honey Selection', category: 'Artisanal Desserts', price: 2100 },
-            { name: 'Smoked Earl Grey Ganache', category: 'Artisanal Desserts', price: 1350 },
-        ]
-    },
-    {
-        name: 'Artisanal Desserts',
-        slug: 'artisanal-desserts-top-2',
-        image: 'https://images.unsplash.com/photo-1551024709-8f23befc6f87?q=80&w=800',
-        items: [
-            { name: 'Valrhona Dark Chocolate Soufflé', category: 'Artisanal Desserts', price: 1400 },
-            { name: 'Madagascan Vanilla Bean Panna Cotta', category: 'Artisanal Desserts', price: 1200 },
-            { name: 'Yuzu Citrus Tart with Meringue', category: 'Artisanal Desserts', price: 1300 },
-            { name: 'Deconstructed Mille-Feuille', category: 'Artisanal Desserts', price: 1500 },
-            { name: 'Artisanal Cheese & Honey Selection', category: 'Artisanal Desserts', price: 2100 },
-            { name: 'Smoked Earl Grey Ganache', category: 'Artisanal Desserts', price: 1350 },
-        ]
-    },
-    {
-        name: 'Artisanal Desserts',
-        slug: 'artisanal-desserts-top-3',
-        image: 'https://images.unsplash.com/photo-1551024709-8f23befc6f87?q=80&w=800',
-        items: [
-            { name: 'Valrhona Dark Chocolate Soufflé', category: 'Artisanal Desserts', price: 1400 },
-            { name: 'Madagascan Vanilla Bean Panna Cotta', category: 'Artisanal Desserts', price: 1200 },
-            { name: 'Yuzu Citrus Tart with Meringue', category: 'Artisanal Desserts', price: 1300 },
-            { name: 'Deconstructed Mille-Feuille', category: 'Artisanal Desserts', price: 1500 },
-            { name: 'Artisanal Cheese & Honey Selection', category: 'Artisanal Desserts', price: 2100 },
-            { name: 'Smoked Earl Grey Ganache', category: 'Artisanal Desserts', price: 1350 },
-        ]
-    }
-];
 
 const formatPrice = (price, currency) =>
     typeof price === 'number' ? `${currency}${price.toLocaleString('en-IN')}` : price;
@@ -154,7 +74,7 @@ function ItemsSlider({ category, currency }) {
 
 /* ───────── Main section ───────── */
 export default function CategorySection({
-    categories = categoriesData,
+    categories = [],
     heading = 'Category',
     basePath = '/menu',
     currency = '₹',

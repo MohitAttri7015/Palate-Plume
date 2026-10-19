@@ -22,7 +22,7 @@ export default function ItemForm({ types = [], categories = [] }) {
     // Hide the green success message after 4 seconds
     useEffect(() => {
         if (!message) return;
-        const timer = setTimeout(() => setMessage(""), 4000);
+        const timer = setTimeout(() => setMessage(""), 2000);
         return () => clearTimeout(timer); // cancel the timer if the message changes or the page closes
     }, [message]);
 
