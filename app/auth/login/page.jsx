@@ -31,7 +31,7 @@ export default function Login() {
             {/* Login content */}
             <div className="relative z-20 flex min-h-screen flex-col items-center justify-center px-4 font-main">
                 <h1 className="mb-2 text-2xl font-bold text-white">
-                    Login to your account
+                    Login (Admin & Staff)
                 </h1>
 
                 <p className="mb-8 text-center text-sm text-white/70">

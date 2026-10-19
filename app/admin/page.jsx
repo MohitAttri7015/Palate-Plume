@@ -4,7 +4,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth";
 import { LOGIN_PATH, STAFF_HOME } from "@/lib/config";
-import LogoutButton from "./LogoutButton";
+import LogoutButton from "../../components/auth/LogoutButton";
 
 // Reading the login cookie must happen inside <Suspense> (needed by newer Next.js versions).
 export default function AdminPage() {
@@ -30,7 +30,7 @@ async function AdminHome() {
             <h1 className="mt-1 text-2xl font-semibold">Welcome, {session.username}</h1>
             <p className="mt-1 text-sm text-neutral-400">You are logged in as the cafe admin.</p>
           </div>
-          <LogoutButton />
+
         </div>
         <div className="mt-8 rounded-xl border border-white/10 bg-neutral-900 p-5 text-sm text-neutral-300">
           Login works. The dashboard, menu manager and settings will be built here next.

@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
@@ -10,7 +10,11 @@ export default function LoginForm() {
     const [password, setPassword] = useState("");
     const [showPassword, setShowPassword] = useState(false);
     const [error, setError] = useState("");
-    const [loading, setLoading] = useState(false);
+    const [submitting, setSubmitting] = useState(false);
+    // isPending stays true while the redirect is in progress and turns false by itself when it
+    // finishes, so the form can never get stuck on "Signing in..." if Next.js keeps this page in memory.
+    const [isPending, startTransition] = useTransition();
+    const loading = submitting || isPending;
 
     // After a failed login, put the cursor back in the password box.
     // (This must wait until the form is enabled again, so it runs after the re-render.)
@@ -22,7 +26,7 @@ export default function LoginForm() {
         e.preventDefault();
         if (loading) return; // stops double clicks
         setError("");
-        setLoading(true);
+        setSubmitting(true);
 
         try {
             const res = await fetch("/api/auth/login", {
@@ -35,16 +39,20 @@ export default function LoginForm() {
             if (!res.ok) {
                 setError(data.error || "Login failed. Please try again.");
                 setPassword(""); // clear the password, keep the username
-                setLoading(false);
+                setSubmitting(false);
                 return;
             }
 
             // Success: the server has set the session cookie. Go to the right screen.
-            router.replace(data.redirectTo || "/");
-            router.refresh();
+            setPassword(""); // don't keep the password in memory after a successful login
+            setSubmitting(false);
+            startTransition(() => {
+                router.replace(data.redirectTo || "/");
+                router.refresh();
+            });
         } catch {
             setError("Can't reach the server. Check your internet connection and try again.");
-            setLoading(false);
+            setSubmitting(false);
         }
     }
 

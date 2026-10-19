@@ -5,6 +5,7 @@ import { ShoppingCart, Plus, UtensilsCrossed } from 'lucide-react';
 import Link from 'next/link';
 import '@/app/globals.css'
 import Image from 'next/image';
+import LogoutButton from '../auth/LogoutButton';
 
 const userLinks = [
     { label: 'Location & Hours', href: '/timing' },
@@ -20,7 +21,7 @@ const adminLinks = [
 
 export default function Nav({ initialSession = null }) {
     const [isOpen, setIsOpen] = useState(false);
-    const [user] = useState(initialSession);
+    const user = initialSession;
 
     useEffect(() => {
         if (!isOpen) return;
@@ -190,7 +191,7 @@ export default function Nav({ initialSession = null }) {
                     {/* Footer */}
                     <div className="flex text-white/80 font-ui flex-wrap items-end justify-between gap-x-4  text-[11px] tracking-wide  sm:text-sm">
                         <span>Palate &amp; Plume</span>
-                        <span>Good food. Good company.</span>
+                        {user?.role === 'admin' || user?.role === 'staff' ? <LogoutButton /> : <Link href='/auth/login'>Login</Link>}
                     </div>
                 </div>
             </nav>

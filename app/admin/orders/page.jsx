@@ -4,7 +4,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth";
 import { LOGIN_PATH } from "@/lib/config";
-import LogoutButton from "../LogoutButton";
+import LogoutButton from "../../../components/auth/LogoutButton";
 
 export default function OrdersPage() {
   return (
@@ -29,7 +29,6 @@ async function KitchenOrders() {
               Logged in as {session.username} ({session.role}).
             </p>
           </div>
-          <LogoutButton />
         </div>
         <div className="mt-8 rounded-xl border border-white/10 bg-neutral-900 p-5 text-sm text-neutral-300">
           No orders yet. New orders with their table numbers will appear here live.
