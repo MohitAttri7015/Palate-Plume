@@ -18,6 +18,7 @@ export default function ImageField({ id, label, hint, file, onChange, error }) {
     useEffect(() => {
         if (!file) return;
         const url = URL.createObjectURL(file);
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setPreviewUrl(url);
         return () => URL.revokeObjectURL(url);
     }, [file]);
@@ -28,8 +29,7 @@ export default function ImageField({ id, label, hint, file, onChange, error }) {
         if (!chosen) return;
 
         if (!ALLOWED_TYPES.includes(chosen.type)) {
-            setLocalError("Please choose a JPG, PNG or WebP picture.");
-            return;
+            return setLocalError("Please choose a JPG, PNG or WebP picture.");
         }
         if (chosen.size > MAX_MB * 1024 * 1024) {
             setLocalError(`That picture is too big. The maximum is ${MAX_MB} MB.`);
