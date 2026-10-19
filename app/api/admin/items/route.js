@@ -12,7 +12,7 @@ const badFields = (fieldErrors, status = 400) => json({ error: "Please fix the h
 
 // Create a menu item.
 export async function POST(request) {
-    
+
     const { session, error } = await requireAdmin();
     if (error) return error;
 
@@ -46,17 +46,18 @@ export async function POST(request) {
         await connectDB();
         await Promise.all([Category.init(), MenuItem.init()]);
 
-        // 5) The category must belong to THIS cafe.
-        const category = await Category.findOne({ _id: data.categoryId, cafeId: session.cafeId }).select("_id").lean();
+        // 5) The category must belong to THIS cafe (and look up the last sort order at the same time).
+        const name = tidy(data.name);
+        const [category, last] = await Promise.all([
+            Category.findOne({ _id: data.categoryId, cafeId: session.cafeId }).select("_id").lean(),
+            MenuItem.findOne({ cafeId: session.cafeId, categoryId: data.categoryId })
+                .sort({ sortOrder: -1 })
+                .select("sortOrder")
+                .lean(),
+        ]);
         if (!category) return badFields({ categoryId: "That category does not exist." });
 
         // 6) Save. cafeId always comes from the login, never from the request.
-        const name = tidy(data.name);
-        const last = await MenuItem.findOne({ cafeId: session.cafeId, categoryId: category._id })
-            .sort({ sortOrder: -1 })
-            .select("sortOrder")
-            .lean();
-
         const item = await MenuItem.create({
             cafeId: session.cafeId,
             categoryId: category._id,

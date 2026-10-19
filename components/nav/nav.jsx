@@ -162,7 +162,7 @@ export default function Nav({ initialSession = null }) {
                     <div className="flex md:flex-row flex-col md:justify-between w-full md:h-50 h-full">
                         <div className="flex min-h-0 flex-1 flex-col gap-1">
                             {(user?.role === 'admin' || user?.role === 'staff' ? adminLinks : userLinks).map((link, index) => (
-                                <a
+                                <Link
                                     key={link.label}
                                     href={link.href}
                                     onClick={() => setIsOpen(false)}
@@ -173,7 +173,7 @@ export default function Nav({ initialSession = null }) {
         hover:translate-x-2 hover:text-white/50"
                                 >
                                     <span>{link.label}</span>
-                                </a>
+                                </Link>
                             ))}
                         </div>
                         <div className="flex-1 relative overflow-hidden rounded-lg">

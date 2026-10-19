@@ -57,15 +57,12 @@ export default function ItemForm({ categories = [] }) {
 
         setBusy(true);
         try {
-            // Upload the pictures to ImageKit
-            setStatus("Uploading the main picture...");
-            const main = await uploadOnce(mainImage);
-
-            let second = null;
-            if (secondImage) {
-                setStatus("Uploading the second picture...");
-                second = await uploadOnce(secondImage);
-            }
+            // Upload both pictures at the same time
+            setStatus("Uploading pictures...");
+            const [main, second] = await Promise.all([
+                uploadOnce(mainImage),
+                secondImage ? uploadOnce(secondImage) : Promise.resolve(null),
+            ]);
 
             // Save the item. The server checks everything again.
             setStatus("Saving the item...");

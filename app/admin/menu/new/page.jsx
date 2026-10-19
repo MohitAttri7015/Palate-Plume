@@ -8,11 +8,12 @@ import { connectDB } from "@/lib/db";
 import { LOGIN_PATH, STAFF_HOME } from "@/lib/config";
 import Category from "@/models/Category";
 import AddPanel from "@/components/admin/AddPanel";
+import Loading from "./loading";
 
 
 export default function NewItemPage() {
     return (
-        <Suspense fallback={<main className="min-h-screen bg-[#0A0A0C]" />}>
+        <Suspense fallback={<Loading />}>
             <NewItem />
         </Suspense>
     );
@@ -51,6 +52,7 @@ async function NewItem() {
                         glow={2}
                         flowDirection="down"
                         opacity={1}
+                        dpr={1}
                         mouseInteraction
                         mouseStrength={1}
                         mouseRadius={0.35}
