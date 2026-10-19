@@ -3,8 +3,10 @@ import { useEffect, useRef, useState } from "react";
 import { Field, inputClass } from "@/components/admin/FormParts";
 
 // onCreated(category) is called after a category is saved, so the item form can show it.
-export default function CategoryForm({ onCreated }) {
+export default function CategoryForm({ types = [], onCreated }) {
     const nameRef = useRef(null);
+    const [typeId, setTypeId] = useState("");
+    const [typeError, setTypeError] = useState("");
     const [name, setName] = useState("");
     const [error, setError] = useState("");
     const [message, setMessage] = useState("");
@@ -21,11 +23,10 @@ export default function CategoryForm({ onCreated }) {
         if (loading) return; // ignore a second click while the first is still saving
 
         const trimmed = name.trim();
-        if (!trimmed) {
-            setMessage("");
-            setError("Please enter a category name.");
-            return;
-        }
+        setMessage("");
+        if (!typeId) setTypeError("Please choose a type (Food or Drink).");
+        if (!trimmed) setError("Please enter a category name.");
+        if (!typeId || !trimmed) return;
 
         setError("");
         setMessage("");
@@ -35,7 +36,7 @@ export default function CategoryForm({ onCreated }) {
             const res = await fetch("/api/admin/categories", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ name: trimmed }),
+                body: JSON.stringify({ name: trimmed, typeId }),
             });
             const data = await res.json().catch(() => ({}));
 
@@ -57,6 +58,31 @@ export default function CategoryForm({ onCreated }) {
 
     return (
         <form onSubmit={handleSubmit} noValidate className="flex w-full max-w-xl flex-col gap-6 font-ui text-white">
+            <Field
+                id="categoryType"
+                label="Type"
+                error={typeError}
+                hint={types.length === 0 ? 'No types found. Add "Food" and "Drink" to the type collection in Atlas.' : "Is this category for food or for drinks?"}
+            >
+                <select
+                    id="categoryType"
+                    value={typeId}
+                    onChange={(e) => {
+                        setTypeId(e.target.value);
+                        setTypeError("");
+                    }}
+                    disabled={loading}
+                    aria-invalid={typeError ? true : undefined}
+                    aria-describedby={typeError ? "categoryType-error" : undefined}
+                    className={inputClass + " bg-[#0A0A0C]"}
+                >
+                    <option value="" className="bg-[#0A0A0C]">Choose a type...</option>
+                    {types.map((t) => (
+                        <option key={t.id} value={t.id} className="bg-[#0A0A0C]">{t.name}</option>
+                    ))}
+                </select>
+            </Field>
+
             <Field id="categoryName" label="Category name" error={error} hint="For example Coffee, Snacks or Desserts">
                 <input
                     ref={nameRef}

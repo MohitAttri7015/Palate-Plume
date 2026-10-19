@@ -3,6 +3,7 @@ import mongoose from "mongoose";
 
 const CategorySchema = new mongoose.Schema({
     cafeId: { type: mongoose.Schema.Types.ObjectId, required: true },
+    typeId: { type: mongoose.Schema.Types.ObjectId, ref: "Type", required: true }, // Food or Drink
     name: { type: String, required: true, trim: true, maxlength: 40 },
     nameKey: { type: String, required: true }, // lowercase copy of the name, used to block duplicates
     sortOrder: { type: Number, default: 0 },

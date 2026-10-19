@@ -7,6 +7,7 @@ import { getSession } from "@/lib/auth";
 import { connectDB } from "@/lib/db";
 import { LOGIN_PATH, STAFF_HOME } from "@/lib/config";
 import Category from "@/models/Category";
+import Type from "@/models/Type";
 import AddPanel from "@/components/admin/AddPanel";
 import Loading from "./loading";
 
@@ -26,11 +27,17 @@ async function NewItem() {
 
     // Load THIS cafe's categories (cafeId comes from the login) for the dropdown.
     let categories = [];
+    let types = [];
     let loadError = false;
     try {
         await connectDB();
-        const rows = await Category.find({ cafeId: session.cafeId }).sort({ sortOrder: 1, name: 1 }).lean();
-        categories = rows.map((c) => ({ id: String(c._id), name: c.name })); // plain text ids can be passed to the form
+        const [typeRows, rows] = await Promise.all([
+            Type.find().sort({ _id: 1 }).lean(), // Food, Drink (in the order you added them in Atlas)
+            Category.find({ cafeId: session.cafeId }).sort({ sortOrder: 1, name: 1 }).lean(),
+        ]);
+        types = typeRows.map((t) => ({ id: String(t._id), name: t.name }));
+        // plain text ids can be passed to the form
+        categories = rows.map((c) => ({ id: String(c._id), name: c.name, typeId: c.typeId ? String(c.typeId) : "" }));
     } catch (err) {
         console.error("Load categories error:", err);
         loadError = true;
@@ -67,7 +74,7 @@ async function NewItem() {
                     <h1 className="sr-only">Add menu items and categories</h1>
                 </div>
 
-                <AddPanel initialCategories={categories} />
+                <AddPanel initialTypes={types} initialCategories={categories} />
             </div>
         </main>
     );

@@ -4,7 +4,8 @@ import { Field, inputClass } from "@/components/admin/FormParts";
 import ImageField from "@/components/admin/ImageField";
 import { uploadImage } from "@/lib/uploadImage";
 
-export default function ItemForm({ categories = [] }) {
+export default function ItemForm({ types = [], categories = [] }) {
+    const [typeId, setTypeId] = useState("");
     const [categoryId, setCategoryId] = useState("");
     const [name, setName] = useState("");
     const [description, setDescription] = useState("");
@@ -16,6 +17,9 @@ export default function ItemForm({ categories = [] }) {
     const [message, setMessage] = useState("");
     const [busy, setBusy] = useState(false); // true while uploading or saving
     const [status, setStatus] = useState(""); // what we are doing right now, e.g. "Uploading the main picture..."
+
+    // Only the categories that belong to the chosen type (Food or Drink).
+    const categoriesOfType = categories.filter((c) => c.typeId === typeId);
 
     // Remembers pictures that were already uploaded, so if saving fails and you
     // press Save again, the same picture is not uploaded twice.
@@ -31,7 +35,8 @@ export default function ItemForm({ categories = [] }) {
     // An empty result means everything is fine.
     function validate() {
         const found = {};
-        if (!categoryId) found.categoryId = "Please choose a category.";
+        if (!typeId) found.typeId = "Please choose a type (Food or Drink).";
+        if (typeId && !categoryId) found.categoryId = "Please choose a category.";
         if (name.trim().length < 2) found.name = "Please enter the item name (at least 2 letters).";
         if (!description.trim()) found.description = "Please write a short description.";
         if (!/^\d{1,6}(\.\d{1,2})?$/.test(price.trim()) || Number(price) <= 0) {
@@ -111,13 +116,46 @@ export default function ItemForm({ categories = [] }) {
             {/* While busy, everything inside this fieldset is locked. */}
             <fieldset disabled={busy} className="m-0 flex min-w-0 flex-col gap-6 border-0 p-0">
                 <Field
+                    id="type"
+                    label="Type"
+                    error={errors.typeId}
+                    hint={types.length === 0 ? 'No types found. Add "Food" and "Drink" to the type collection in Atlas.' : "Is this item food or a drink?"}
+                >
+                    <select
+                        id="type"
+                        value={typeId}
+                        onChange={(e) => {
+                            setTypeId(e.target.value);
+                            setCategoryId(""); 
+                            clearError("typeId");
+                            clearError("categoryId");
+                        }}
+                        aria-invalid={errors.typeId ? true : undefined}
+                        aria-describedby={errors.typeId ? "type-error" : undefined}
+                        className={inputClass + " bg-[#0A0A0C]"}
+                    >
+                        <option value="" className="bg-[#0A0A0C]">Choose a type...</option>
+                        {types.map((t) => (
+                            <option key={t.id} value={t.id} className="bg-[#0A0A0C]">{t.name}</option>
+                        ))}
+                    </select>
+                </Field>
+
+                <Field
                     id="category"
                     label="Category"
                     error={errors.categoryId}
-                    hint={categories.length === 0 ? 'No categories yet. Click "Add new category" above to create one.' : "Where this item appears on the menu."}
+                    hint={
+                        !typeId
+                            ? "Choose a type first."
+                            : categoriesOfType.length === 0
+                                ? 'No categories for this type yet. Click "Add new category" above to create one.'
+                                : "Where this item appears on the menu."
+                    }
                 >
                     <select
                         id="category"
+                        disabled={!typeId}
                         value={categoryId}
                         onChange={(e) => {
                             setCategoryId(e.target.value);
@@ -128,7 +166,7 @@ export default function ItemForm({ categories = [] }) {
                         className={inputClass + " bg-[#0A0A0C]"}
                     >
                         <option value="" className="bg-[#0A0A0C]">Choose a category...</option>
-                        {categories.map((c) => (
+                        {categoriesOfType.map((c) => (
                             <option key={c.id} value={c.id} className="bg-[#0A0A0C]">{c.name}</option>
                         ))}
                     </select>

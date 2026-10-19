@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
 import { connectDB } from "@/lib/db";
-import { categorySchema, tidy } from "@/lib/validation";
+import { categorySchema, isObjectIdString, tidy } from "@/lib/validation";
 import Category from "@/models/Category";
+import Type from "@/models/Type";
 import { requireAdmin } from "@/lib/requireAdmin";
 
 
@@ -12,7 +13,7 @@ export async function POST(request) {
 
     const { session, error } = await requireAdmin();
     if (error) return error;
-    
+
     let body;
     try {
         body = await request.json();
@@ -29,21 +30,29 @@ export async function POST(request) {
         return json({ error: friendly || "Please enter a category name." }, 400);
     }
     const name = tidy(parsed.data.name);
+    if (!isObjectIdString(parsed.data.typeId)) return json({ error: "Please choose a type (Food or Drink)." }, 400);
 
     // 4) Save it.
     try {
         await connectDB();
         await Category.init(); // makes sure the "no duplicates" rule exists in the database
 
-        const last = await Category.findOne({ cafeId: session.cafeId }).sort({ sortOrder: -1 }).select("sortOrder").lean();
+        // The type must be a real one from the "type" collection (and look up the last sort order at the same time).
+        const [type, last] = await Promise.all([
+            Type.findById(parsed.data.typeId).select("_id").lean(),
+            Category.findOne({ cafeId: session.cafeId }).sort({ sortOrder: -1 }).select("sortOrder").lean(),
+        ]);
+        if (!type) return json({ error: "That type does not exist. Please choose Food or Drink." }, 400);
+
         const category = await Category.create({
             cafeId: session.cafeId, // always comes from the login, never from the request
+            typeId: type._id,
             name,
             nameKey: name.toLowerCase(),
             sortOrder: (last?.sortOrder ?? 0) + 1, // new category goes to the end of the list
         });
 
-        return json({ ok: true, category: { id: String(category._id), name: category.name } }, 201);
+        return json({ ok: true, category: { id: String(category._id), name: category.name, typeId: String(category.typeId) } }, 201);
     } catch (err) {
         if (err?.code === 11000) return json({ error: "That category already exists." }, 409);
         console.error("Create category error:", err);

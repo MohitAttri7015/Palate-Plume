@@ -8,7 +8,7 @@ const TABS = [
     { id: "category", label: "Add new category", text: "Categories group your menu, for example Coffee, Snacks or Desserts." },
 ];
 
-export default function AddPanel({ initialCategories = [] }) {
+export default function AddPanel({ initialTypes = [], initialCategories = [] }) {
     const [tab, setTab] = useState("item");
     // The list of categories lives HERE, so both forms can use it.
     const [categories, setCategories] = useState(initialCategories);
@@ -43,10 +43,10 @@ export default function AddPanel({ initialCategories = [] }) {
 
             {/* Both forms stay on the page; only one is shown. So what you typed is not lost when you switch. */}
             <div hidden={tab !== "item"}>
-                <ItemForm categories={categories} />
+                <ItemForm types={initialTypes} categories={categories} />
             </div>
             <div hidden={tab !== "category"}>
-                <CategoryForm onCreated={handleCategoryCreated} />
+                <CategoryForm types={initialTypes} onCreated={handleCategoryCreated} />
             </div>
         </div>
     );
