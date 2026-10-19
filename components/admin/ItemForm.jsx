@@ -1,5 +1,5 @@
 "use client";
-import { useRef, useState } from "react";
+import { useRef, useState, useEffect } from "react";
 import { Field, inputClass } from "@/components/admin/FormParts";
 import ImageField from "@/components/admin/ImageField";
 import { uploadImage } from "@/lib/uploadImage";
@@ -17,6 +17,14 @@ export default function ItemForm({ types = [], categories = [] }) {
     const [message, setMessage] = useState("");
     const [busy, setBusy] = useState(false); // true while uploading or saving
     const [status, setStatus] = useState(""); // what we are doing right now, e.g. "Uploading the main picture..."
+
+
+    // Hide the green success message after 4 seconds
+    useEffect(() => {
+        if (!message) return;
+        const timer = setTimeout(() => setMessage(""), 4000);
+        return () => clearTimeout(timer); // cancel the timer if the message changes or the page closes
+    }, [message]);
 
     // Only the categories that belong to the chosen type (Food or Drink).
     const categoriesOfType = categories.filter((c) => c.typeId === typeId);
@@ -240,7 +248,7 @@ export default function ItemForm({ types = [], categories = [] }) {
 
                 <ImageField
                     id="secondImage"
-                    label="Second picture (optional)"
+                    label="Second picture"
                     hint="A second angle or a closer look."
                     file={secondImage}
                     onChange={(f) => {
