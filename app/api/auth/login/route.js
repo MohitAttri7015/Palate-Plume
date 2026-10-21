@@ -35,7 +35,11 @@ export async function POST(request) {
   const userKey = `user:${ip}:${username}`;
   const ipKey = `ip:${ip}`;
 
-  const wait = Math.max(retryAfterSeconds(userKey, MAX_PER_USER), retryAfterSeconds(ipKey, MAX_PER_IP));
+  const [waitUser, waitIp] = await Promise.all([
+    retryAfterSeconds(userKey, MAX_PER_USER),
+    retryAfterSeconds(ipKey, MAX_PER_IP),
+  ]);
+  const wait = Math.max(waitUser, waitIp);
   if (wait > 0) {
     const minutes = Math.ceil(wait / 60);
     return json(
@@ -55,13 +59,12 @@ export async function POST(request) {
 
     const passwordOk = await bcrypt.compare(password, user?.passwordHash ?? DUMMY_HASH);
     if (!user || !passwordOk) {
-      recordFailure(userKey);
-      recordFailure(ipKey);
+      await Promise.all([recordFailure(userKey), recordFailure(ipKey)]);
       // Same message for "no such user" and "wrong password" on purpose.
       return json({ code: "WRONG_CREDENTIALS", error: "Wrong username or password." }, 401);
     }
 
-    clearFailures(userKey);
+    await clearFailures(userKey);
 
     const token = await createSessionToken({
       userId: String(user._id),

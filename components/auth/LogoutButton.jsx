@@ -13,11 +13,12 @@ export default function LogoutButton() {
   }
 
   return (
-    <span
+    <button
+      type="button"
       onClick={handleLogout}
       className="cursor-pointer"
     >
       Log out
-    </span>
+    </button>
   );
 }

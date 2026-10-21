@@ -3,16 +3,25 @@ import GlowCursor from './GlowCursor';
 import FlyingTableware from './Flyingtableware';
 
 
-const links = [
+const userLinks = [
     { label: 'Home', href: '/' },
     { label: 'Menu', href: '/menu' },
     { label: 'Cart', href: '/cart' },
     { label: 'Location & Time', href: '#location' },
 ];
 
+const adminLinks = [
+    { label: 'Home', href: '/' },
+    { label: 'Menu', href: '/menu' },
+    { label: 'See Orders', href: '/' },
+    { label: 'Location & Time', href: '#location' },
+];
 
 
-export default function Footer() {
+
+export default function Footer({ initialSession = null }) {
+    const user = initialSession;
+
     return (
         // No background color here, so the footer uses the same background as the rest of the page
         <div className="mt-[5rem]  text-white">
@@ -42,18 +51,18 @@ export default function Footer() {
                         </div>
 
                         <div aria-label="Footer navigation">
-                            <ul className="flex md:flex-row flex-col items-center gap-x-6 gap-y-2 font-ui text-[14px]">
-                                {links.map((link) => (
-                                    <li key={link.label}>
-                                        <Link
-                                            href={link.href}
-                                            className="transition-colors duration-300 hover:text-white/50"
-                                        >
-                                            {link.label}
-                                        </Link>
-                                    </li>
+                            <div className="flex md:flex-row flex-col items-center gap-x-6 gap-y-2 font-ui text-[14px]">
+                                {(user?.role === 'admin' || user?.role === 'staff' ? adminLinks : userLinks).map((link, index) => (
+
+                                    <Link
+                                        key={index}
+                                        href={link.href}
+                                        className="transition-colors duration-300 hover:text-white/50"
+                                    >
+                                        {link.label}
+                                    </Link>
                                 ))}
-                            </ul>
+                            </div>
                         </div>
                     </div>
 

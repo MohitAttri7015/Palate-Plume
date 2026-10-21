@@ -19,7 +19,7 @@ export default function ItemForm({ types = [], categories = [] }) {
     const [status, setStatus] = useState(""); // what we are doing right now, e.g. "Uploading the main picture..."
 
 
-    // Hide the green success message after 4 seconds
+    // Hide the green success message after 2 seconds
     useEffect(() => {
         if (!message) return;
         const timer = setTimeout(() => setMessage(""), 2000);

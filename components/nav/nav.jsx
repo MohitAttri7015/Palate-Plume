@@ -3,7 +3,6 @@
 import { useEffect, useState } from 'react';
 import { ShoppingCart, Plus, UtensilsCrossed } from 'lucide-react';
 import Link from 'next/link';
-import '@/app/globals.css'
 import Image from 'next/image';
 import LogoutButton from '../auth/LogoutButton';
 

@@ -35,7 +35,7 @@ export default function Login() {
                 </h1>
 
                 <p className="mb-8 text-center text-sm text-white/70">
-                    Login with you username and password.
+                    Login with your username and password.
                 </p>
 
                 <LoginForm />

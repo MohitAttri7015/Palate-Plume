@@ -33,7 +33,7 @@ function ItemsSlider({ category, currency }) {
             <ul role="list" className="flex touch-pan-y touch-pinch-zoom gap-2 px-4 sm:px-12">
                 {category.items.map((item) => (
                     <li
-                        key={item.name}
+                        key={item.id}
                         className="w-[72vw] shrink-0 grow-0 sm:w-[40vw] md:w-[30vw] lg:w-[23vw]"
                     >
                         <div className="group relative aspect-4/5 overflow-hidden bg-[#16161A] p-12">

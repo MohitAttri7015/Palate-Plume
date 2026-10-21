@@ -35,5 +35,5 @@ export default async function proxy(request) {
 
 // Which addresses the guard watches. (This list must be written out as plain text.)
 export const config = {
-    matcher: ["/login", "/admin/:path*", "/api/admin/:path*"],
+    matcher: ["/auth/login", "/admin/:path*", "/api/admin/:path*"],
 };
