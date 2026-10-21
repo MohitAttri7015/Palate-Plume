@@ -398,7 +398,7 @@ export default function MenuItemsGallery({ groups = [], initial }) {
                             </span>
 
                             <h2
-                                className="text-3xl sm:text-4xl tracking-tight uppercase leading-none font-heading"
+                                className="text-3xl text-center sm:text-4xl tracking-tight uppercase leading-none font-heading"
                                 style={{
                                     color: '#fff',
                                 }}
