@@ -1,7 +1,7 @@
 import { Suspense } from 'react';
 import { getSession } from "@/lib/auth"
 import Nav from "@/components/nav/nav";
-import Footer from "@/components/footer/footer";
+import Footer from "@/components/footer/footer"
 
 export const metadata = {
     title: {
@@ -44,6 +44,7 @@ export default function GuestLayout({ children }) {
             <footer>
                 <Footer />
             </footer>
+
         </div>
     );
 }

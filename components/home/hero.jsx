@@ -40,11 +40,11 @@ export default function Hero() {
                 </div>
                 <p className="text-[12px] font-ui md:w-[40%] sm:w-[80%] w-full text-white/80">A digital menu and live ordering system for cafes. Customers scan, order and pay from their own phone, and your kitchen sees each order the moment it’s placed. No app to install, no menus to reprint.</p>
                 <div className="flex gap-4 font-ui font-bold text-[12px] items-center">
-                    <Link href='/' className="bg-white text-black pl-1 pr-4 py-1 rounded-full flex items-center gap-2 transition-all duration-500 ease-in-out hover:bg-black hover:text-white">
+                    <Link href='/menu' className="bg-white text-black pl-1 pr-4 py-1 rounded-full flex items-center gap-2 transition-all duration-500 ease-in-out hover:bg-black hover:text-white">
                         <ArrowRight size={30} strokeWidth={1.5} nonScalingStroke className="bg-black text-white p-2 rounded-full" />
                         Check our menu
                     </Link>
-                    <Link href='/'>See our speciality</Link>
+                    <Link href='#OurSpeciality'>See our speciality</Link>
                 </div>
             </div>
         </div>
