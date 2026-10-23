@@ -16,6 +16,12 @@ async function NavbarWrapper() {
     return <Nav initialSession={session} isGuest={isGuest} />;
 }
 
+async function FooterWrapper() {
+    const session = await getSession();
+    return <Footer initialSession={session} />;
+}
+
+
 export default function Home() {
     return (
         <>
@@ -30,7 +36,9 @@ export default function Home() {
             <MocktailsDesign />
             <Categories />
             <footer>
-                <Footer />
+                <Suspense fallBack={<div></div>}>
+                    <FooterWrapper />
+                </Suspense>
             </footer>
         </>
     )

@@ -12,7 +12,7 @@ const rupees = (paise) =>
     `₹${(paise / 100).toLocaleString('en-IN', { minimumFractionDigits: paise % 100 ? 2 : 0, maximumFractionDigits: 2 })}`;
 
 export default function CartView({ tableNumber }) {
-    const { items, setQty, remove } = useCart();
+    const { items, setQty, remove, ready, atTable, tableFull, people, maxPeople } = useCart();
 
     // Names/prices come from the server. We ask again only when the SET of items changes, not on every + or -.
     const idsKey = items.map((i) => i.id).sort().join(',');
@@ -66,7 +66,14 @@ export default function CartView({ tableNumber }) {
                 {/* Which table this phone is at (from the QR code). */}
                 <p className="mt-4 text-[12px] tracking-wide text-white/60">
                     {tableNumber ? `Table ${tableNumber}` : 'Scan the QR code on your table to place an order.'}
+                    {atTable && people > 1 && ` · ${people} of ${maxPeople} people here, this cart is shared`}
                 </p>
+
+                {tableFull && (
+                    <p role="alert" className="mt-6 border border-red-400/40 px-4 py-3 text-[12px] text-red-200">
+                        This table already has {maxPeople} people. Please ask a member of our team for help.
+                    </p>
+                )}
 
                 {removedNote && (
                     <p role="status" className="mt-6 border border-white/20 px-4 py-3 text-[12px] text-white/80">
@@ -74,7 +81,9 @@ export default function CartView({ tableNumber }) {
                     </p>
                 )}
 
-                {items.length === 0 ? (
+                {!ready ? (
+                    <div aria-hidden="true" className="mt-16 h-24 animate-pulse bg-white/5" />
+                ) : items.length === 0 ? (
                     <div className="mt-16 flex flex-col items-start gap-6">
                         <p className="text-sm text-white/60">Your cart is empty.</p>
                         <Link href="/menu" className="border border-white px-10 py-3 text-[12px] uppercase tracking-[1px] transition-colors duration-500 hover:bg-white hover:text-black">

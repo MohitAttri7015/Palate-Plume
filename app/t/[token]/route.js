@@ -6,6 +6,7 @@ import Table from "@/models/Table";
 import { TOKEN_PATTERN } from "@/lib/tables";
 import { retryAfterSeconds, recordFailure } from "@/lib/rateLimit";
 import { GUEST_COOKIE, GUEST_HOURS, guestCookieOptions, createGuestToken, verifyGuestToken } from "@/lib/guest";
+import { readCart } from "@/lib/tableCart";
 
 const MAX_BAD_SCANS = 15; // wrong codes per computer (per 15 minutes) before we stop answering
 
@@ -37,6 +38,14 @@ export async function GET(request, { params }) {
         const existing = await verifyGuestToken(request.cookies.get(GUEST_COOKIE)?.value);
         const sameTable = existing && existing.tableId === String(table._id) && existing.epoch === table.epoch;
         const sid = sameTable ? existing.sid : crypto.randomUUID();
+
+        // NEW: take a seat at the table. If it already has the maximum number of phones, no guest cookie is handed out.
+        const seat = await readCart({ sid, tableId: String(table._id), cafeId: String(table.cafeId), epoch: table.epoch });
+        if (seat.error === "TABLE_FULL") {
+            const full = go(request, "/table-full");
+            full.cookies.set(GUEST_COOKIE, "", { ...guestCookieOptions, maxAge: 0 }); // also drop an old cookie of this phone
+            return full;
+        }
 
         const jwt = await createGuestToken({
             sid,
