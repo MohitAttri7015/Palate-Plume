@@ -4,6 +4,7 @@ import React, { useEffect, useRef, useState, useMemo } from 'react';
 import * as THREE from 'three';
 import MenuNavigator from './MenuNavigator'
 import { defaultSelection, itemsFor } from '@/lib/menuSelect'
+import { useCart } from '@/lib/cartStore'
 
 // --- SHADERS FOR LIQUID/PAPER WAVE DISTORTION ON SCROLL ---
 const VERTEX_SHADER = `
@@ -56,7 +57,7 @@ const mod = (n, m) => ((n % m) + m) % m;
 const pad = (n) => String(n).padStart(2, '0');
 const formatPrice = (price) => `₹${Number(price).toLocaleString('en-IN')}`;
 
-export default function MenuItemsGallery({ groups = [], initial }) {
+export default function MenuItemsGallery({ groups = [], initial, canOrder = true }) {
     // What the visitor picked in the dropdowns. Default: the first type (Food), all its categories.
     const [selection, setSelection] = useState(initial ?? defaultSelection(groups));
     const items = useMemo(() => itemsFor(groups, selection), [groups, selection]);
@@ -71,6 +72,9 @@ export default function MenuItemsGallery({ groups = [], initial }) {
     const dirtyRef = useRef(true); // true = something changed, draw the next frame
     const threeRef = useRef({ scene: null, camera: null, renderer: null, geometry: null, loader: null, meshes: [] });
     const touchStartY = useRef(0);
+    const { add } = useCart();
+    const [added, setAdded] = useState(false); // shows "Added" for a moment after the button is pressed
+    const addedTimer = useRef(null);
 
     // --- THREE.JS INITIALIZATION (once) ---
     useEffect(() => {
@@ -325,6 +329,16 @@ export default function MenuItemsGallery({ groups = [], initial }) {
     }, []);
 
     const activeItem = items[activeIndex] ?? items[0];
+    useEffect(() => () => clearTimeout(addedTimer.current), []);
+
+    function handleAdd() {
+        if (!activeItem) return;
+        add(activeItem.id);
+        setAdded(true);
+        clearTimeout(addedTimer.current);
+        addedTimer.current = setTimeout(() => setAdded(false), 1200);
+    }
+
 
     // Dynamic velocity motion blur
     const textBlurStyle = {
@@ -420,12 +434,23 @@ export default function MenuItemsGallery({ groups = [], initial }) {
                             {activeItem.description}
                         </p>
 
-                        {/* Static Purely Visual Add To Bag Button (Non-clickable / No action popups) */}
                         <div className="w-full mt-2">
-                            <div className="font-ui w-full border border-[#26262E] text-white cursor-pointer py-4 px-6 rounded-xl  text-xs uppercase tracking-wider flex items-center justify-between">
-                                <span>Add to Bag</span>
-                                <span className="font-semibold text-white" style={textBlurStyle}>{formatPrice(activeItem.price)}</span>
-                            </div>
+                            {canOrder ? (
+                                <button
+                                    type="button"
+                                    onClick={handleAdd}
+                                    className="font-ui w-full border border-[#26262E] text-white cursor-pointer py-4 px-6 rounded-xl  text-xs uppercase tracking-wider flex items-center justify-between transition-colors duration-300 hover:border-white/40"
+                                >
+                                    <span aria-live="polite">{added ? 'Added to bag ✓' : 'Add to Bag'}</span>
+                                    <span className="font-semibold text-white" style={textBlurStyle}>{formatPrice(activeItem.price)}</span>
+                                </button>
+                            ):(
+                                    <div className="font-ui w-full border border-[#26262E] text-white py-4 px-6 rounded-xl text-xs uppercase tracking-wider flex items-center justify-between">
+                                        <span>Price</span>
+                                        <span className="font-semibold text-white" style={textBlurStyle}>{formatPrice(activeItem.price)}</span>
+                                    </div>
+                            )}
+                            
                         </div>
 
                     </div>

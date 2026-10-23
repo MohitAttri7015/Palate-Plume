@@ -2,13 +2,15 @@ import { Suspense } from "react";
 import CustomSlider from "./CustomSlider";
 import SliderSkeleton from "./SliderSkeleton";
 import { getFeaturedFood } from "@/lib/homeMenu";
+import { getSession } from "@/lib/auth";
 
 const HEADER_IMAGE =
     "https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?auto=format&fit=crop&w=1000&q=80";
 
 async function FeatureTastingContent() {
+
     // 5 random food items (from different food categories), new picks on every visit
-    const products = await getFeaturedFood(5);
+    const [products, session] = await Promise.all([getFeaturedFood(5), getSession()]);
     if (products.length === 0) return null;
 
     return (
@@ -25,6 +27,7 @@ async function FeatureTastingContent() {
                 headerButtonLink="/menu"
                 products={products}
                 currency="₹"
+                canOrder={!session}
             />
         </div>
     );

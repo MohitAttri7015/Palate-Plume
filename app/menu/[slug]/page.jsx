@@ -5,13 +5,15 @@ import MenuItemsGallery from '@/components/menu/MenuItemsGallery'
 import MenuSkeleton from '@/components/menu/MenuSkeleton'
 import { getMenuGroups } from '@/lib/menuData'
 import { selectionForCategory } from '@/lib/menuSelect'
+import { getSession } from "@/lib/auth";
 
 async function CategoryContent({ params }) {
     const { slug } = await params
-    const groups = await getMenuGroups()
+    const [groups, session] = await Promise.all([getMenuGroups(), getSession()])
+
     const initial = selectionForCategory(groups, slug)
     if (!initial) notFound()
-    return <MenuItemsGallery groups={groups} initial={initial} />
+    return <MenuItemsGallery groups={groups} initial={initial} canOrder={!session}/>
 }
 
 export default function CategoryMenu({ params }) {

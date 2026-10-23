@@ -5,6 +5,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import useEmblaCarousel from 'embla-carousel-react';
 import { ShoppingBasket } from 'lucide-react';
+import { useCart } from '@/lib/cartStore';
 
 
 const formatPrice = (price, currency) =>
@@ -13,7 +14,8 @@ const formatPrice = (price, currency) =>
 const EMBLA_OPTIONS = { align: 'start', dragFree: true, containScroll: 'trimSnaps' };
 
 /* ───────── Items slider (remounts when the category changes, then fades in) ───────── */
-function ItemsSlider({ category, currency }) {
+function ItemsSlider({ category, currency, canOrder }) {
+    const { add } = useCart();
     const [emblaRef] = useEmblaCarousel(EMBLA_OPTIONS);
     const [shown, setShown] = useState(false);
 
@@ -59,6 +61,7 @@ function ItemsSlider({ category, currency }) {
                                     type="button"
                                     draggable={false}
                                     aria-label={`Add ${item.name} to cart`}
+                                    onClick={() => add(item.id)}
                                     className="flex h-9 w-9  border border-white/20  items-center justify-center rounded-full bg-black/40 text-white backdrop-blur-sm"
                                 >
                                     <ShoppingBasket size={20} strokeWidth={1.5} />
@@ -78,6 +81,7 @@ export default function CategorySection({
     heading = 'Category',
     basePath = '/menu',
     currency = '₹',
+    canOrder = true
 }) {
     const [activeIndex, setActiveIndex] = useState(0);
     const [emblaRef] = useEmblaCarousel(EMBLA_OPTIONS);   
@@ -165,7 +169,7 @@ export default function CategorySection({
             </div>
 
             {/* Items of the selected category */}
-            <ItemsSlider key={active.slug} category={active} currency={currency} />
+            <ItemsSlider key={active.slug} category={active} currency={currency} canOrder={canOrder} />
         </section>
     );
 }

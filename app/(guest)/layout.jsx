@@ -1,8 +1,3 @@
-import { Suspense } from 'react';
-import { getSession } from "@/lib/auth"
-import Nav from "@/components/nav/nav";
-import Footer from "@/components/footer/footer"
-
 export const metadata = {
     title: {
         absolute: "Palate & Plume – Culinary Artistry & Digital Menu",
@@ -25,26 +20,12 @@ export const metadata = {
 };
 
 
-async function NavbarWrapper() {
-    const session = await getSession();
-    return <Nav initialSession={session} />;
-}
+
 export default function GuestLayout({ children }) {
 
     return (
         <div className="w-full">
-            <header>
-                <Suspense fallback={<div></div>}>
-                    <NavbarWrapper />
-                </Suspense>
-            </header>
-
             {children}
-
-            <footer>
-                <Footer />
-            </footer>
-
         </div>
     );
 }

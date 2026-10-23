@@ -4,6 +4,7 @@ import Link from 'next/link';
 import useEmblaCarousel from 'embla-carousel-react';
 import Image from 'next/image';
 import { ShoppingBasket } from 'lucide-react';
+import { useCart } from '@/lib/cartStore';
 
 // Neutral grey block shown if an image fails to load (no network needed)
 const FALLBACK_IMG =
@@ -43,7 +44,10 @@ export default function CustomSlider({
     currency = '₹',
     options = {},
     className = '',
+    canOrder = true,
 }) {
+
+    const { add } = useCart();
     // dragFree = momentum glide after you let go (set dragFree: false to snap card by card)
     const [emblaRef] = useEmblaCarousel({
         align: 'start',
@@ -142,24 +146,28 @@ export default function CustomSlider({
                                         />
                                     )}
 
-                                    {/* 768px and up (md): text button, shown on hover */}
-                                    <button
-                                        type="button"
-                                        draggable={false}
-                                        className="hidden md:block bg-white cursor-pointer w-[90%] text-center py-3 font-ui text-[12px] font-medium uppercase tracking-[1px] text-black transition-all duration-500 ease-in-out hover:bg-black hover:text-white absolute bottom-4 left-1/2 z-10 -translate-x-1/2 opacity-0 group-hover:opacity-100"
-                                    >
-                                        ADD TO CART
-                                    </button>
+                                    {canOrder && (<>
+                                        {/* 768px and up (md): text button, shown on hover */}
+                                        <button
+                                            type="button"
+                                            draggable={false}
+                                            onClick={() => add(product.id)}
+                                            className="hidden md:block bg-white cursor-pointer w-[90%] text-center py-3 font-ui text-[12px] font-medium uppercase tracking-[1px] text-black transition-all duration-500 ease-in-out hover:bg-black hover:text-white absolute bottom-4 left-1/2 z-10 -translate-x-1/2 opacity-0 group-hover:opacity-100"
+                                        >
+                                            ADD TO CART
+                                        </button>
 
-                                    {/* Below 768px: always-visible basket icon, bottom right (no hover on phones) */}
-                                    <button
-                                        type="button"
-                                        draggable={false}
-                                        aria-label={`Add ${product.name} to cart`}
-                                        className="md:hidden absolute bottom-3 right-3 z-10 flex h-10 w-10 items-center justify-center rounded-full bg-black/40 text-white backdrop-blur-sm"
-                                    >
-                                        <ShoppingBasket size={20} strokeWidth={1.5} />
-                                    </button>
+                                        {/* Below 768px: always-visible basket icon, bottom right (no hover on phones) */}
+                                        <button
+                                            type="button"
+                                            draggable={false}
+                                            onClick={() => add(product.id)}
+                                            aria-label={`Add ${product.name} to cart`}
+                                            className="md:hidden absolute bottom-3 right-3 z-10 flex h-10 w-10 items-center justify-center rounded-full bg-black/40 text-white backdrop-blur-sm"
+                                        >
+                                            <ShoppingBasket size={20} strokeWidth={1.5} />
+                                        </button>
+                                    </>)}
                                 </div>
                             </div>
                         </li>

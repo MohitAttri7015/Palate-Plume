@@ -35,8 +35,8 @@ async function AdminHome() {
         <div className="mt-8 rounded-xl border border-white/10 bg-neutral-900 p-5 text-sm text-neutral-300">
           Login works. The dashboard, menu manager and settings will be built here next.
         </div>
-        <Link href="/admin/orders" className="mt-4 inline-block text-sm text-amber-500 hover:underline">
-          Open the kitchen screen
+        <Link href="/admin/tables" className="mt-4 block text-sm text-amber-500 hover:underline">
+          Tables and QR codes
         </Link>
       </div>
     </main>

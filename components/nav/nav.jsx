@@ -5,10 +5,17 @@ import { ShoppingCart, Plus, UtensilsCrossed } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
 import LogoutButton from '../auth/LogoutButton';
+import { useCart } from '@/lib/cartStore';
 
-const userLinks = [
+const visitorLinks = [
     { label: 'Location & Hours', href: '/timing' },
     { label: 'Enter Table #', href: '#table' },
+    { label: 'Menu', href: '/menu' },
+];
+
+const guestLinks = [
+    { label: 'Location & Hours', href: '/timing' },
+    { label: 'View Orders', href: '/yourOrder' },
     { label: 'Menu', href: '/menu' },
 ];
 
@@ -18,9 +25,12 @@ const adminLinks = [
     { label: 'Menu', href: '/menu' },
 ];
 
-export default function Nav({ initialSession = null }) {
+export default function Nav({ initialSession = null, isGuest }) {
     const [isOpen, setIsOpen] = useState(false);
+    const { count: cartCount } = useCart();
+
     const user = initialSession;
+    const guest = Boolean(isGuest);
 
     useEffect(() => {
         if (!isOpen) return;
@@ -94,8 +104,13 @@ export default function Nav({ initialSession = null }) {
                     <Link
                         aria-label={user?.role === 'admin' ? 'Add new item' : user?.role === 'staff' ? 'Staff tools' : 'View cart'}
                         href={user?.role === 'admin' ? '/admin/menu/new' : user?.role === 'staff' ? '/admin/orders' : '/cart'}
-                        className="group flex h-10 w-10 shrink-0 items-center justify-center"
+                        className="group relative flex h-10 w-10 shrink-0 items-center justify-center"
                     >
+                        {cartCount > 0 && (
+                            <span aria-hidden="true" className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-white px-1 text-[10px] font-semibold leading-none text-black">
+                                {cartCount}
+                            </span>
+                        )}
                         {user?.role === 'admin' ? (
                             <Plus
                                 size={20}
@@ -161,7 +176,13 @@ export default function Nav({ initialSession = null }) {
 
                     <div className="flex md:flex-row flex-col md:justify-between w-full md:h-50 h-full">
                         <div className="flex min-h-0 flex-1 flex-col gap-1">
-                            {(user?.role === 'admin' || user?.role === 'staff' ? adminLinks : userLinks).map((link, index) => (
+                            {(
+                                user?.role === 'admin' || user?.role === 'staff'
+                                    ? adminLinks
+                                    : guest
+                                        ? guestLinks
+                                        : visitorLinks
+                            ).map((link, index) => (
                                 <Link
                                     key={link.label}
                                     href={link.href}
