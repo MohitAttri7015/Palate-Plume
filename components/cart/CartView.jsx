@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link'
 import { X } from 'lucide-react'
 import Image from 'next/image';
+import { useRouter } from 'next/navigation';
 import { Minus, Plus, Trash2 } from 'lucide-react';
 import { useCart } from '@/lib/cartStore';
 
@@ -12,7 +13,10 @@ const rupees = (paise) =>
     `₹${(paise / 100).toLocaleString('en-IN', { minimumFractionDigits: paise % 100 ? 2 : 0, maximumFractionDigits: 2 })}`;
 
 export default function CartView({ tableNumber }) {
-    const { items, setQty, remove, ready, atTable, tableFull, people, maxPeople } = useCart();
+    const { items, setQty, remove, ready, atTable, tableFull, people, maxPeople, refresh } = useCart();
+    const router = useRouter();
+    const [placing, setPlacing] = useState(false);
+    const [orderError, setOrderError] = useState('');
 
     // Names/prices come from the server. We ask again only when the SET of items changes, not on every + or -.
     const idsKey = items.map((i) => i.id).sort().join(',');
@@ -48,12 +52,36 @@ export default function CartView({ tableNumber }) {
     const failed = idsKey !== '' && failedKey === idsKey;
     const totalPaise = items.reduce((sum, i) => sum + (quote.lines[i.id]?.unitPaise ?? 0) * i.qty, 0);
 
+    // The order button only works for a phone that sits at a table, once the prices have loaded.
+    const canOrder = atTable && !tableFull && !loading && !failed && items.length > 0 && !placing;
+
+    async function placeOrder() {
+        setPlacing(true);
+        setOrderError('');
+        try {
+            // Nothing is sent: the server uses the shared cart and the real prices from the database.
+            const res = await fetch('/api/orders', { method: 'POST' });
+            const data = await res.json().catch(() => ({}));
+            if (!res.ok) {
+                setOrderError(data.error || 'We could not place your order. Please try again.');
+                await refresh(); // show the real cart (it may have changed)
+                setPlacing(false);
+                return;
+            }
+            await refresh(); // the cart is empty now, on every phone at the table
+            router.push('/yourOrder');
+        } catch {
+            setOrderError('No connection. Please try again.');
+            setPlacing(false);
+        }
+    }
+
     return (
         <main className="min-h-screen px-4 py-8 font-ui text-white sm:px-12">
             <div className="mx-auto max-w-2xl">
                 <div className="flex flex-row justify-between">
                     <h1 className="font-heading text-5xl sm:text-6xl">Your cart</h1>
-                    
+
                     <Link
                         href="/"
                         aria-label="Close the menu"
@@ -137,9 +165,23 @@ export default function CartView({ tableNumber }) {
                             <span className="font-heading text-3xl">{loading ? '...' : rupees(totalPaise)}</span>
                         </div>
 
-                        {/* Placing the order is the next step. The server will check the table and recalculate every price itself. */}
-                        <button type="button" disabled className="mt-8 w-full cursor-not-allowed border border-white/30 py-4 text-[12px] uppercase tracking-[1px] text-white/50">
-                            Place order
+
+                        {orderError && (
+                            <p role="alert" className="mt-6 border border-red-400/40 px-4 py-3 text-[12px] text-red-200">
+                                {orderError}
+                            </p>
+                        )}
+
+                        <button
+                            type="button"
+                            onClick={placeOrder}
+                            disabled={!canOrder}
+                            className={`mt-8 w-full border py-4 text-[12px] uppercase tracking-[1px] transition-colors duration-500 ${canOrder
+                                ? 'cursor-pointer border-white text-white hover:bg-white hover:text-black'
+                                : 'cursor-not-allowed border-white/30 text-white/50'
+                                }`}
+                        >
+                            {placing ? 'Placing your order...' : 'Place order'}
                         </button>
                     </>
                 )}

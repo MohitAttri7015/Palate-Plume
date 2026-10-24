@@ -19,6 +19,7 @@ const TableCartSchema = new mongoose.Schema({
     epoch: { type: Number, required: true },
     items: { type: [LineSchema], default: [] },
     guests: { type: [GuestSchema], default: [] },
+    sitting: { type: String },
     version: { type: Number, default: 1 }, // goes up ONLY when the items change. Phones compare this number.
     rev: { type: Number, default: 0 }, // goes up on EVERY save. Used to detect "someone saved while I was working".
     lastActiveAt: { type: Date, required: true }, // last time anyone did anything at this table
