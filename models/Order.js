@@ -23,8 +23,8 @@ const OrderSchema = new mongoose.Schema(
             validate: { validator: (list) => list.length > 0, message: "An order needs at least one item." },
         },
         totalPaise: { type: Number, required: true, min: 1 },
-        // Not used yet. The kitchen page will move it along later. Every new order starts as "new".
-        status: { type: String, enum: ["new", "preparing", "ready", "served", "cancelled"], default: "new" },
+        // The kitchen moves it along: pending -> accepted -> preparing -> served (or cancelled). See lib/orderStatus.js.
+        status: { type: String, enum: ["pending", "accepted", "preparing", "served", "cancelled"], default: "pending" },
     },
     { timestamps: true } // adds createdAt and updatedAt
 );

@@ -1,10 +1,12 @@
-// TEMPORARY kitchen page so you can test the staff login. Replace it later with the live order board.
+// The kitchen board. Admin and staff both open this page; the list updates itself every 3 seconds.
 import { Suspense } from "react";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth";
 import { LOGIN_PATH } from "@/lib/config";
-import LogoutButton from "../../../components/auth/LogoutButton";
+import KitchenBoard from "@/components/admin/KitchenBoard";
+
+export const metadata = { title: "Kitchen | Palate & Plume", robots: { index: false } };
 
 export default function OrdersPage() {
   return (
@@ -19,8 +21,8 @@ async function KitchenOrders() {
   if (!session) redirect(LOGIN_PATH);
 
   return (
-    <main className="min-h-screen bg-neutral-950 px-6 py-10 text-neutral-100">
-      <div className="mx-auto max-w-3xl">
+    <main className="min-h-screen bg-neutral-950 px-4 py-8 text-neutral-100 sm:px-6">
+      <div className="mx-auto max-w-6xl">
         <div className="flex items-start justify-between gap-4">
           <div>
             <p className="text-xs font-medium tracking-[0.2em] text-amber-500">KITCHEN</p>
@@ -29,15 +31,19 @@ async function KitchenOrders() {
               Logged in as {session.username} ({session.role}).
             </p>
           </div>
+          <div className="flex items-center gap-4 text-sm text-neutral-300">
+            {session.role === "admin" && (
+              <Link href="/admin" className="text-amber-500 hover:underline">
+                Back to admin
+              </Link>
+            )}
+            <Link href="/" className=" hover:underline">
+              Back to home
+            </Link>
+          </div>
         </div>
-        <div className="mt-8 rounded-xl border border-white/10 bg-neutral-900 p-5 text-sm text-neutral-300">
-          No orders yet. New orders with their table numbers will appear here live.
-        </div>
-        {session.role === "admin" && (
-          <Link href="/admin" className="mt-4 inline-block text-sm text-amber-500 hover:underline">
-            Back to admin
-          </Link>
-        )}
+
+        <KitchenBoard />
       </div>
     </main>
   );

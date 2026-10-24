@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link'
 import { X } from 'lucide-react'
 import Image from 'next/image';
@@ -16,6 +16,7 @@ export default function CartView({ tableNumber }) {
     const { items, setQty, remove, ready, atTable, tableFull, people, maxPeople, refresh } = useCart();
     const router = useRouter();
     const [placing, setPlacing] = useState(false);
+    const placingRef = useRef(false);
     const [orderError, setOrderError] = useState('');
 
     // Names/prices come from the server. We ask again only when the SET of items changes, not on every + or -.
@@ -56,22 +57,26 @@ export default function CartView({ tableNumber }) {
     const canOrder = atTable && !tableFull && !loading && !failed && items.length > 0 && !placing;
 
     async function placeOrder() {
+        if (placingRef.current) return;
+        placingRef.current = true;
         setPlacing(true);
         setOrderError('');
         try {
-            // Nothing is sent: the server uses the shared cart and the real prices from the database.
             const res = await fetch('/api/orders', { method: 'POST' });
             const data = await res.json().catch(() => ({}));
             if (!res.ok) {
                 setOrderError(data.error || 'We could not place your order. Please try again.');
-                await refresh(); // show the real cart (it may have changed)
-                setPlacing(false);
+                await refresh();
                 return;
             }
             await refresh(); // the cart is empty now, on every phone at the table
             router.push('/yourOrder');
         } catch {
             setOrderError('No connection. Please try again.');
+        } finally {
+            // Always switch "Placing..." off. Next.js keeps this page alive in the background
+            // when you open /yourOrder, so without this it still said "Placing..." on coming back.
+            placingRef.current = false;
             setPlacing(false);
         }
     }

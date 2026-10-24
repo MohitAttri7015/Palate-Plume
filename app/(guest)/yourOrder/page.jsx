@@ -2,13 +2,13 @@ import { Suspense } from "react";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { X } from "lucide-react";
-import { connectDB } from "@/lib/db";
 import { getSession } from "@/lib/auth";
 import { homeFor } from "@/lib/config";
 import { getValidGuest } from "@/lib/guest";
 import { readCart } from "@/lib/tableCart";
-import { formatRupees } from "@/lib/money";
-import Order from "@/models/Order";
+import { ordersForSitting, shapeOrder, stampOf } from "@/lib/orders";
+import YourOrders from "@/components/orders/YourOrders";
+
 
 export const metadata = {
     title: { absolute: "Your order | Palate & Plume" },
@@ -16,10 +16,7 @@ export const metadata = {
     robots: { index: false },
 };
 
-// The servers run on UTC time, so we say which clock the cafe uses.
-const TIME_ZONE = "Asia/Kolkata";
-const timeOf = (date) =>
-    new Date(date).toLocaleTimeString("en-IN", { timeZone: TIME_ZONE, hour: "numeric", minute: "2-digit" });
+
 
 // The frame around everything (same look as the cart page).
 function Page({ table, children }) {
@@ -82,15 +79,7 @@ async function OrderContent() {
         if (cart.error) {
             tableIsFull = true;
         } else {
-            await connectDB();
-            await Order.init();
-
-            orders = await Order.find({
-                tableId: guest.tableId,
-                sitting: cart.sitting,
-            })
-                .sort({ createdAt: 1 })
-                .lean();
+            orders = await ordersForSitting(guest, cart.sitting);
         }
     } catch (err) {
         console.error("Your order page error:", err);
@@ -113,73 +102,10 @@ async function OrderContent() {
         );
     }
 
-    if (orders.length === 0) {
-        return (
-            <Page table={guest.table}>
-                <Nothing text="You have not placed an order yet." />
-            </Page>
-        );
-    }
-
-    const allTotal = orders.reduce(
-        (sum, order) => sum + order.totalPaise,
-        0
-    );
-
+    // Always show the live list, even when it is empty: someone else at the table may order while this page is open.
     return (
         <Page table={guest.table}>
-            <ol className="mt-10 flex flex-col gap-8">
-                {orders.map((order, index) => (
-                    <li key={String(order._id)} className="border-y border-white/10 py-5">
-                        <div className="flex items-baseline justify-between">
-                            <h2 className="font-heading text-2xl uppercase">
-                                Order {index + 1}
-                            </h2>
-                            <span className="text-[12px] text-white/60">
-                                {timeOf(order.createdAt)}
-                            </span>
-                        </div>
-
-                        <ul className="mt-4 flex flex-col gap-2 text-[14px]">
-                            {order.items.map((line) => (
-                                <li key={String(line.itemId)} className="flex justify-between gap-4">
-                                    <span>
-                                        {line.qty} × {line.name}
-                                    </span>
-                                    <span className="shrink-0 text-white/70">
-                                        {formatRupees(line.unitPaise * line.qty)}
-                                    </span>
-                                </li>
-                            ))}
-                        </ul>
-
-                        <div className="mt-4 flex justify-between border-t border-white/10 pt-3 text-[13px]">
-                            <span className="uppercase tracking-widest text-white/60">
-                                Order total
-                            </span>
-                            <span>{formatRupees(order.totalPaise)}</span>
-                        </div>
-                    </li>
-                ))}
-            </ol>
-
-            {orders.length > 1 && (
-                <div className="mt-8 flex items-center justify-between">
-                    <span className="text-[12px] uppercase tracking-widest text-white/60">
-                        All orders
-                    </span>
-                    <span className="font-heading text-3xl">
-                        {formatRupees(allTotal)}
-                    </span>
-                </div>
-            )}
-
-            <Link
-                href="/menu"
-                className="mt-10 block w-full border border-white py-4 text-center text-[12px] uppercase tracking-[1px] transition-colors duration-500 hover:bg-white hover:text-black"
-            >
-                Order more
-            </Link>
+            <YourOrders initialOrders={orders.map(shapeOrder)} initialStamp={stampOf(orders)} />
         </Page>
     );
 }

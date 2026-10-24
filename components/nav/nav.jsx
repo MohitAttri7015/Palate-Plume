@@ -6,10 +6,11 @@ import Link from 'next/link';
 import Image from 'next/image';
 import LogoutButton from '../auth/LogoutButton';
 import { useCart } from '@/lib/cartStore';
+import TableEntryModal from './TableEntryModal';
 
 const visitorLinks = [
     { label: 'Location & Hours', href: '/timing' },
-    { label: 'Enter Table #', href: '#table' },
+    { label: 'Enter Table #', action: 'table' },
     { label: 'Menu', href: '/menu' },
 ];
 
@@ -27,6 +28,7 @@ const adminLinks = [
 
 export default function Nav({ initialSession = null, isGuest }) {
     const [isOpen, setIsOpen] = useState(false);
+    const [tableFormOpen, setTableFormOpen] = useState(false);
     const { count: cartCount } = useCart();
 
     const user = initialSession;
@@ -182,20 +184,42 @@ export default function Nav({ initialSession = null, isGuest }) {
                                     : guest
                                         ? guestLinks
                                         : visitorLinks
-                            ).map((link, index) => (
-                                <Link
-                                    key={link.label}
-                                    href={link.href}
-                                    onClick={() => setIsOpen(false)}
-                                    style={{ transitionDelay: isOpen ? `${index * 70}ms` : '0ms' }}
-                                    className="group flex w-fit items-center py-1
-        md:text-[clamp(23px,4vw,1px)] text-[clamp(18px,4vw,1px)] 
+                            ).map((link, index) => {
+                                const linkClass = `group flex w-fit items-center py-1
+        md:text-[clamp(23px,4vw,1px)] text-[clamp(18px,4vw,1px)]
         tracking-[-1px] transition-all duration-300
-        hover:translate-x-2 hover:text-white/50"
-                                >
-                                    <span>{link.label}</span>
-                                </Link>
-                            ))}
+        hover:translate-x-2 hover:text-white/50`;
+                                const delay = { transitionDelay: isOpen ? `${index * 70}ms` : '0ms' };
+
+                                // "Enter Table #" is a button: it closes the menu and opens the little form.
+                                if (link.action === 'table') {
+                                    return (
+                                        <button
+                                            key={link.label}
+                                            type="button"
+                                            onClick={() => {
+                                                setIsOpen(false);
+                                                setTableFormOpen(true);
+                                            }}
+                                            style={delay}
+                                            className={`${linkClass} cursor-pointer`}
+                                        >
+                                            <span>{link.label}</span>
+                                        </button>
+                                    );
+                                }
+                                return (
+                                    <Link
+                                        key={link.label}
+                                        href={link.href}
+                                        onClick={() => setIsOpen(false)}
+                                        style={delay}
+                                        className={linkClass}
+                                    >
+                                        <span>{link.label}</span>
+                                    </Link>
+                                );
+                            })}
                         </div>
                         <div className="flex-1 relative overflow-hidden rounded-lg">
                             {/* implement image */}
@@ -215,6 +239,8 @@ export default function Nav({ initialSession = null, isGuest }) {
                     </div>
                 </div>
             </nav>
+
+            <TableEntryModal open={tableFormOpen} onClose={() => setTableFormOpen(false)} />
         </>
     );
 }
