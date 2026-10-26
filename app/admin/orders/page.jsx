@@ -23,7 +23,7 @@ async function KitchenOrders() {
   return (
     <main className="min-h-screen bg-neutral-950 px-4 py-8 text-neutral-100 sm:px-6 font-ui">
       <div className="mx-auto max-w-6xl">
-        <div className="flex items-start justify-between gap-4">
+        <div className="flex items-start justify-between gap-4 sm:flex-row flex-col sm:mb-0 mb-10">
           <div>
             <p className="text-xs font-medium tracking-[0.2em] text-amber-500">KITCHEN</p>
             <h1 className="mt-1 text-2xl font-semibold">Live orders</h1>
@@ -31,20 +31,20 @@ async function KitchenOrders() {
               Logged in as {session.username} ({session.role}).
             </p>
           </div>
-          <div className="flex md:flex-row flex-col items-center gap-4 text-sm text-neutral-300">
+          <div className="flex md:flex-row sm:flex-col flex-wrap items-center gap-4 text-sm text-neutral-300">
             {session.role === "admin" && (
               <>
                 <>
-                  <Link href="/admin/menu" className="text-amber-500 hover:underline">
+                  <Link href="/admin/menu" className="text-amber-500  border-1 px-4 py-2 rounded-full">
                     Manage Menu
                   </Link>
-                  <Link href="/admin/tables" className="text-amber-500 hover:underline">
+                  <Link href="/admin/tables" className="text-amber-500  border-1 px-4 py-2 rounded-full ">
                     Manage Tables
                   </Link>
                 </>
               </>
             )}
-            <Link href="/" className=" hover:underline">
+            <Link href="/" className=" border-1 px-4 py-2 rounded-full transition all 0.3s hover:bg-white hover:text-black">
               Back to Home
             </Link>
           </div>
