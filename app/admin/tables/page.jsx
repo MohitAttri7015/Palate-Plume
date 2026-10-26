@@ -36,7 +36,7 @@ async function TablesContent() {
     return (
         <main className="min-h-screen bg-neutral-950 px-6 py-10 text-neutral-100">
             <div className="mx-auto max-w-2xl">
-                <Link href="/admin" className="text-sm text-neutral-400 hover:text-white">Back to admin</Link>
+                <Link href="/admin/orders" className="text-sm text-neutral-400 hover:text-white">Back to kitchen</Link>
                 <p className="mt-6 text-xs font-medium tracking-[0.2em] text-amber-500">TABLES</p>
                 <h1 className="mt-1 text-2xl font-semibold">Tables and QR codes</h1>
                 <p className="mt-1 text-sm text-neutral-400">Every table has its own QR code. Print them and stick one on each table.</p>
