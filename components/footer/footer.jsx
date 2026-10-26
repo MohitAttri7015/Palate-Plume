@@ -1,31 +1,48 @@
+'use client';
+
+import { useState } from 'react';
 import Link from 'next/link';
 import GlowCursor from './GlowCursor';
 import FlyingTableware from './Flyingtableware';
+import TableEntryModal from '@/components/nav/TableEntryModal';
 
 
 
 
-const userLinks = [
-    { label: 'Home', href: '/' },
+const visitorLinks = [
+    { label: 'Location & Hours', href: '/timing' },
+    { label: 'Enter Table #', action: 'table' },
     { label: 'Menu', href: '/menu' },
-    { label: 'Cart', href: '/cart' },
-    { label: 'Location & Time', href: '#location' },
 ];
 
+const guestLinks = [
+    { label: 'Location & Hours', href: '/timing' },
+    { label: 'View Orders', href: '/yourOrder' },
+    { label: 'Menu', href: '/menu' },
+];
 const adminLinks = [
     { label: 'Home', href: '/' },
     { label: 'Menu', href: '/menu' },
-    { label: 'See Orders', href: '/' },
+    { label: 'See Orders', href: '/admin/orders' },
+    { label: 'Manage Menu', href: '/admin/menu' },
+    { label: 'Location & Time', href: '#location' },
+];
+
+const staffLinks = [
+    { label: 'Home', href: '/' },
+    { label: 'Menu', href: '/menu' },
+    { label: 'See Orders', href: '/admin/orders' },
     { label: 'Location & Time', href: '#location' },
 ];
 
 
-
-export default function Footer({ initialSession = null }) {
+export default function Footer({ initialSession = null, isGuest }) {
     const user = initialSession;
+    const guest = Boolean(isGuest);
+    const [tableFormOpen, setTableFormOpen] = useState(false);
 
     return (
-        // No background color here, so the footer uses the same background as the rest of the page
+        <>
         <div className="mt-[5rem]  text-white">
             {/* The glow cursor effect only runs inside this footer */}
             <GlowCursor
@@ -54,16 +71,33 @@ export default function Footer({ initialSession = null }) {
 
                         <div aria-label="Footer navigation">
                             <div className="flex md:flex-row flex-col items-center gap-x-6 gap-y-2 font-ui text-[14px]">
-                                {(user?.role === 'admin' || user?.role === 'staff' ? adminLinks : userLinks).map((link, index) => (
-
-                                    <Link
-                                        key={index}
-                                        href={link.href}
-                                        className="transition-colors duration-300 hover:text-white/50"
-                                    >
-                                        {link.label}
-                                    </Link>
-                                ))}
+                                {(user?.role === 'admin'
+    ? adminLinks
+    : user?.role === 'staff'
+        ? staffLinks
+        : guest
+            ? guestLinks
+            : visitorLinks).map((link) =>
+                // "Enter Table #" has no page: it opens the little form instead
+                link.action === 'table' ? (
+                    <button
+                        key={link.label}
+                        type="button"
+                        onClick={() => setTableFormOpen(true)}
+                        className="cursor-pointer transition-colors duration-300 hover:text-white/50"
+                    >
+                        {link.label}
+                    </button>
+                ) : (
+                    <Link
+                        key={link.label}
+                        href={link.href}
+                        className="transition-colors duration-300 hover:text-white/50"
+                    >
+                        {link.label}
+                    </Link>
+                )
+            )}
                             </div>
                         </div>
                     </div>
@@ -86,5 +120,11 @@ export default function Footer({ initialSession = null }) {
                 </div>
             </GlowCursor>
         </div>
+
+            {/* Outside the glow area, so nothing around it can move or clip the form */}
+            <TableEntryModal open={tableFormOpen} onClose={() => setTableFormOpen(false)} />
+        
+        </>
+      
     );
 }

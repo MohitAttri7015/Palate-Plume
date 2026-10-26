@@ -47,7 +47,7 @@ function ItemsSlider({ category, currency, canOrder }) {
                                 fill
                                 sizes="(min-width:1024px) 23vw, (min-width:768px) 30vw, (min-width:640px) 40vw, 72vw"
                                 draggable={false}
-                                className="relative! object-cover transition-transform duration-700 ease-out group-hover:scale-105"
+                                className={`relative! object-cover transition-transform duration-700 ease-out group-hover:scale-105 ${item.soldOut ? 'opacity-50 grayscale' : ''}`}
                             />
                         </div>
 
@@ -57,7 +57,17 @@ function ItemsSlider({ category, currency, canOrder }) {
 
                             <div className="mt-3 flex items-center justify-between">
                                 <span className="text-[13px]">{formatPrice(item.price, currency)}</span>
-                                {canOrder && (<>
+                                {item.soldOut ? (
+                                    <button
+                                        type="button"
+                                        disabled
+                                        aria-disabled="true"
+                                        aria-label={`${item.name} is sold out`}
+                                        className="cursor-not-allowed rounded-full border border-white/20 bg-black/40 px-3 py-1.5 text-[10px] uppercase tracking-wider text-white/60"
+                                    >
+                                        Sold out
+                                    </button>
+                                ) : canOrder && (<>
                                     <button
                                         type="button"
                                         draggable={false}

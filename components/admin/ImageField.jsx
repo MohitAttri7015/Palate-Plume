@@ -10,7 +10,7 @@ const MAX_MB = 5;
 // A picture chooser with a preview.
 //   file     = the chosen picture (or null)
 //   onChange = called with the new picture, or null when removed
-export default function ImageField({ id, label, hint, file, onChange, error }) {
+export default function ImageField({ id, label, hint, file, onChange, error, currentUrl }) {
     const inputRef = useRef(null);
     const [previewUrl, setPreviewUrl] = useState("");
     const [localError, setLocalError] = useState("");
@@ -83,6 +83,22 @@ export default function ImageField({ id, label, hint, file, onChange, error }) {
                                 Remove
                             </button>
                         </div>
+                    </div>
+                </div>
+            ) : currentUrl ? (
+                // Edit mode: the picture that is saved now. "Change" picks a new one.
+                <div className="flex items-center gap-4 rounded-lg border border-[#333] p-3">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={currentUrl} alt={`Current ${label}`} className="h-20 w-20 shrink-0 rounded-md object-cover" />
+                    <div className="min-w-0 flex-1">
+                        <p className="text-sm text-[#ccc]">Current picture</p>
+                        <button
+                            type="button"
+                            onClick={() => inputRef.current?.click()}
+                            className="mt-2 cursor-pointer text-xs text-white/70 underline underline-offset-4 hover:text-white"
+                        >
+                            Change
+                        </button>
                     </div>
                 </div>
             ) : (

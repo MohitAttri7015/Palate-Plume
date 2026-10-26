@@ -20,11 +20,21 @@ const guestLinks = [
     { label: 'Menu', href: '/menu' },
 ];
 
+// Only the admin can manage the menu, so only the admin sees this link.
 const adminLinks = [
+    { label: 'Location & Hours', href: '/timing' },
+    { label: 'See Orders', href: '/admin/orders' },
+    { label: 'Manage Menu', href: '/admin/menu' },
+    { label: 'Menu', href: '/menu' },
+];
+
+
+const staffLinks = [
     { label: 'Location & Hours', href: '/timing' },
     { label: 'See Orders', href: '/admin/orders' },
     { label: 'Menu', href: '/menu' },
 ];
+
 
 export default function Nav({ initialSession = null, isGuest }) {
     const [isOpen, setIsOpen] = useState(false);
@@ -179,11 +189,13 @@ export default function Nav({ initialSession = null, isGuest }) {
                     <div className="flex md:flex-row flex-col md:justify-between w-full md:h-50 h-full">
                         <div className="flex min-h-0 flex-1 flex-col gap-1">
                             {(
-                                user?.role === 'admin' || user?.role === 'staff'
+                                user?.role === 'admin'
                                     ? adminLinks
-                                    : guest
-                                        ? guestLinks
-                                        : visitorLinks
+                                    : user?.role === 'staff'
+                                        ? staffLinks
+                                        : guest
+                                            ? guestLinks
+                                            : visitorLinks
                             ).map((link, index) => {
                                 const linkClass = `group flex w-fit items-center py-1
         md:text-[clamp(23px,4vw,1px)] text-[clamp(18px,4vw,1px)]

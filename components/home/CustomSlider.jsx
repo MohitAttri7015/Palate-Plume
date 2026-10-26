@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import useEmblaCarousel from 'embla-carousel-react';
 import Image from 'next/image';
-import { ShoppingBasket } from 'lucide-react';
+import { ShoppingBasket, Ban } from 'lucide-react';
 import { useCart } from '@/lib/cartStore';
 
 // Neutral grey block shown if an image fails to load (no network needed)
@@ -130,9 +130,9 @@ export default function CustomSlider({
                                         draggable={false}
                                         decoding="async"
                                         onError={handleImgError}
-                                        className="absolute inset-0 h-full w-full object-cover"
+                                        className={`absolute inset-0 h-full w-full object-cover ${product.soldOut ? 'opacity-50 grayscale' : ''}`}
                                     />
-                                    {product.hoverImage && (
+                                    {product.hoverImage && !product.soldOut && (
                                         <Image
                                             src={product.hoverImage}
                                             fill
@@ -146,7 +146,26 @@ export default function CustomSlider({
                                         />
                                     )}
 
-                                    {canOrder && (<>
+                                    {product.soldOut ? (<>
+                                        {/* Sold out: a switched-off button (text on desktop, icon on phones) */}
+                                        <button
+                                            type="button"
+                                            disabled
+                                            aria-disabled="true"
+                                            className="hidden md:block cursor-not-allowed w-[90%] border border-white/30 bg-black/60 py-3 text-center font-ui text-[12px] font-medium uppercase tracking-[1px] text-white/70 absolute bottom-4 left-1/2 z-10 -translate-x-1/2"
+                                        >
+                                            SOLD OUT
+                                        </button>
+                                        <button
+                                            type="button"
+                                            disabled
+                                            aria-disabled="true"
+                                            aria-label={`${product.name} is sold out`}
+                                            className="md:hidden cursor-not-allowed absolute bottom-3 right-3 z-10 flex h-10 w-10 items-center justify-center rounded-full bg-black/60 text-white/70 backdrop-blur-sm"
+                                        >
+                                            <Ban size={20} strokeWidth={1.5} />
+                                        </button>
+                                    </>) : canOrder && (<>
                                         {/* 768px and up (md): text button, shown on hover */}
                                         <button
                                             type="button"

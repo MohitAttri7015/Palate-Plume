@@ -24,6 +24,7 @@ export default function CartView({ tableNumber }) {
     const [quote, setQuote] = useState({ key: '', lines: {} });
     const [failedKey, setFailedKey] = useState('');
     const [removedNote, setRemovedNote] = useState(false);
+    const [recheck, setRecheck] = useState(0); // goes up to ask the server about the items again
 
     useEffect(() => {
         if (!idsKey) return;
@@ -47,7 +48,7 @@ export default function CartView({ tableNumber }) {
                 if (err?.name !== 'AbortError') setFailedKey(idsKey);
             });
         return () => controller.abort();
-    }, [idsKey, remove]);
+    }, [idsKey, remove, recheck]);
 
     const loading = idsKey !== '' && quote.key !== idsKey && failedKey !== idsKey;
     const failed = idsKey !== '' && failedKey === idsKey;
@@ -61,6 +62,7 @@ export default function CartView({ tableNumber }) {
         placingRef.current = true;
         setPlacing(true);
         setOrderError('');
+        if (data.code === 'ITEM_UNAVAILABLE') setRecheck((n) => n + 1); // something just sold out: find it and remove it
         try {
             const res = await fetch('/api/orders', { method: 'POST' });
             const data = await res.json().catch(() => ({}));

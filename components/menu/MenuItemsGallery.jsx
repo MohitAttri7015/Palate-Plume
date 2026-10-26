@@ -332,7 +332,7 @@ export default function MenuItemsGallery({ groups = [], initial, canOrder = true
     useEffect(() => () => clearTimeout(addedTimer.current), []);
 
     function handleAdd() {
-        if (!activeItem) return;
+        if (!activeItem || activeItem.soldOut) return;
         add(activeItem.id);
         setAdded(true);
         clearTimeout(addedTimer.current);
@@ -435,7 +435,19 @@ export default function MenuItemsGallery({ groups = [], initial, canOrder = true
                         </p>
 
                         <div className="w-full mt-2">
-                            {canOrder ? (
+                            {
+                                activeItem.soldOut ? (
+                                    // Sold out: the button is switched off for everybody (customers, staff and admin)
+                                    <button
+                                        type="button"
+                                        disabled
+                                        aria-disabled="true"
+                                        className="font-ui w-full border border-[#26262E] text-white/50 cursor-not-allowed py-4 px-6 rounded-xl text-xs uppercase tracking-wider flex items-center justify-between"
+                                    >
+                                        <span>Sold out</span>
+                                        <span className="font-semibold line-through" style={textBlurStyle}>{formatPrice(activeItem.price)}</span>
+                                    </button>
+                                ) : canOrder ? (
                                 <button
                                     type="button"
                                     onClick={handleAdd}
