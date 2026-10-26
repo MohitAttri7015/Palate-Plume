@@ -41,19 +41,19 @@ async function PrintContent() {
     }
 
     return (
-        <main className="min-h-screen bg-white p-6 text-black print:p-0">
+        <main className="min-h-screen  p-6 text-white print:p-0">
             <div className="mb-6 flex items-center justify-between print:hidden">
-                <Link href="/admin/tables" className="text-sm underline">Back to tables</Link>
+                <Link href="/admin/tables" className="text-sm underline font-ui">Back to tables</Link>
                 <PrintButton />
             </div>
 
             {cards.length === 0 ? (
-                <p className="text-sm">No active tables. Create them first on the tables page.</p>
+                <p className="text-sm font-ui">No active tables. Create them first on the tables page.</p>
             ) : (
                 <div className="grid grid-cols-2 gap-6 sm:grid-cols-3 print:grid-cols-3 print:gap-4">
                     {cards.map((c) => (
-                        <div key={c.id} className="break-inside-avoid border border-black/20 p-4 text-center">
-                            <p className="text-lg font-semibold">Palate &amp; Plume</p>
+                        <div key={c.id} className="break-inside-avoid border border-black/20 p-4 text-center font-ui">
+                            <p className="text-lg font-semibold font-heading">Palate &amp; Plume</p>
                             {/* The SVG comes from the QR library, built only from our own link, never from visitor input. */}
                             <div className="mx-auto my-3 w-full max-w-[220px] [&>svg]:h-auto [&>svg]:w-full" dangerouslySetInnerHTML={{ __html: c.svg }} />
                             <p className="text-3xl font-semibold">Table {c.number}</p>
