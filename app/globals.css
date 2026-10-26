@@ -6,6 +6,14 @@
   --font-logo: 'Isometra', cursive, sans-serif;
 }
 
+@media print {
+
+  html,
+  body {
+    background: #fff !important;
+    color: #000;
+  }
+}
 
 @theme inline {
   --font-ui: var(--next-font-ui);

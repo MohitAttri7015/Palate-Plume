@@ -5,7 +5,8 @@ import Link from 'next/link';
 import { formatRupees } from '@/lib/money';
 import { STATUS_INFO } from '@/lib/orderStatus';
 
-const POLL_MS = 3000; // how often the phone asks "anything new?"
+const POLL_BASE = 4000; // how often the phone asks "anything new?" (ms)
+const POLL_MAX = 8000; // when nothing changes it slowly relaxes to this, never slower
 const STEPS = ['pending', 'accepted', 'preparing', 'served']; // the progress bar (cancelled is shown separately)
 
 const timeOf = (iso) =>
@@ -43,6 +44,7 @@ export default function YourOrders({ initialOrders, initialStamp }) {
         let stopped = false;
         let running = false;
         let timer = 0;
+        let delay = POLL_BASE;
         const controller = new AbortController();
 
         async function tick() {
@@ -65,6 +67,9 @@ export default function YourOrders({ initialOrders, initialStamp }) {
                     if (!data.unchanged) {
                         stamp.current = data.stamp;
                         setOrders(data.orders);
+                        delay = POLL_BASE; // something changed: keep asking often
+                    } else {
+                        delay = Math.min(POLL_MAX, Math.round(delay * 1.4)); // quiet: relax a little
                     }
                     setOffline(false);
                 } else {
@@ -76,16 +81,17 @@ export default function YourOrders({ initialOrders, initialStamp }) {
             } finally {
                 running = false;
             }
-            if (again && !stopped) timer = setTimeout(tick, POLL_MS);
+            if (again && !stopped) timer = setTimeout(tick, delay);
         }
 
         function onVisible() {
             if (document.hidden) return;
             clearTimeout(timer);
+            delay = POLL_BASE;
             tick(); // the person came back to the tab: catch up right away
         }
 
-        timer = setTimeout(tick, POLL_MS);
+        timer = setTimeout(tick, POLL_BASE);
         document.addEventListener('visibilitychange', onVisible);
         return () => {
             stopped = true;
