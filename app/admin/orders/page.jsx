@@ -31,14 +31,14 @@ async function KitchenOrders() {
               Logged in as {session.username} ({session.role}).
             </p>
           </div>
-          <div className="flex items-center gap-4 text-sm text-neutral-300">
+          <div className="flex md:flex-row flex-col items-center gap-4 text-sm text-neutral-300">
             {session.role === "admin" && (
               <Link href="/admin/tables" className="text-amber-500 hover:underline">
-                Tables
+                Manage Tables
               </Link>
             )}
             <Link href="/" className=" hover:underline">
-              home
+              Back to Home
             </Link>
           </div>
         </div>
