@@ -70,6 +70,7 @@ async function OrderContent() {
     }
 
     let orders;
+    let sitting = '';
     let tableIsFull = false;
     let loadError = false;
 
@@ -79,6 +80,7 @@ async function OrderContent() {
         if (cart.error) {
             tableIsFull = true;
         } else {
+            sitting = cart.sitting;
             orders = await ordersForSitting(guest, cart.sitting);
         }
     } catch (err) {
@@ -105,7 +107,7 @@ async function OrderContent() {
     // Always show the live list, even when it is empty: someone else at the table may order while this page is open.
     return (
         <Page table={guest.table}>
-            <YourOrders initialOrders={orders.map(shapeOrder)} initialStamp={stampOf(orders)} />
+            <YourOrders initialOrders={orders.map(shapeOrder)} initialStamp={stampOf(orders)} table={guest.table} sitting={sitting} />
         </Page>
     );
 }

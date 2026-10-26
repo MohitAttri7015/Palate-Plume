@@ -13,6 +13,19 @@ const GuestSchema = new mongoose.Schema(
     { _id: false }
 );
 
+// The live payment (QR code) of this table. Only one at a time. See lib/billing.js.
+const PaySchema = new mongoose.Schema(
+    {
+        sitting: { type: String }, // which sitting this payment belongs to
+        attemptId: { type: String, default: null }, // the QR code that is live right now (null = none)
+        amountPaise: { type: Number, default: 0 },
+        expiresAt: { type: Date },
+        fails: { type: Number, default: 0 }, // failed or expired tries so far
+    },
+    { _id: false }
+);
+
+
 const TableCartSchema = new mongoose.Schema({
     tableId: { type: mongoose.Schema.Types.ObjectId, required: true },
     cafeId: { type: mongoose.Schema.Types.ObjectId, required: true },
@@ -20,7 +33,8 @@ const TableCartSchema = new mongoose.Schema({
     items: { type: [LineSchema], default: [] },
     guests: { type: [GuestSchema], default: [] },
     sitting: { type: String },
-    version: { type: Number, default: 1 }, // goes up ONLY when the items change. Phones compare this number.
+    pay: { type: PaySchema, default: undefined },
+    version: { type: Number, default: 1 },
     rev: { type: Number, default: 0 }, // goes up on EVERY save. Used to detect "someone saved while I was working".
     lastActiveAt: { type: Date, required: true }, // last time anyone did anything at this table
     expiresAt: { type: Date, required: true }, // the database deletes the cart after this moment

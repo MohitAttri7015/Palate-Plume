@@ -1,6 +1,7 @@
 // One physical table in the cafe. Its QR code holds a link with the secret `token`.
 import mongoose from "mongoose";
 
+
 const TableSchema = new mongoose.Schema({
     cafeId: { type: mongoose.Schema.Types.ObjectId, required: true },
     number: { type: Number, required: true, min: 1, max: 99, validate: { validator: Number.isInteger, message: "Table number must be a whole number." } },

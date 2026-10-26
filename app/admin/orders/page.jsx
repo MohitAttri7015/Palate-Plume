@@ -32,6 +32,9 @@ async function KitchenOrders() {
             </p>
           </div>
           <div className="flex md:flex-row sm:flex-col flex-wrap items-center gap-4 text-sm text-neutral-300">
+          <Link href="/admin/bills" className="text-amber-500  border-1 px-4 py-2 rounded-full">
+              Table Bills
+            </Link>
             {session.role === "admin" && (
               <>
                 <>

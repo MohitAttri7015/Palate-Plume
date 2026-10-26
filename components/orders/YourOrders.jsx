@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { formatRupees } from '@/lib/money';
 import { STATUS_INFO } from '@/lib/orderStatus';
+import PayPanel from '@/components/payment/PayPanel';
 
 const POLL_BASE = 4000; // how often the phone asks "anything new?" (ms)
 const POLL_MAX = 8000; // when nothing changes it slowly relaxes to this, never slower
@@ -32,11 +33,12 @@ function Progress({ status }) {
     );
 }
 
-export default function YourOrders({ initialOrders, initialStamp }) {
+export default function YourOrders({ initialOrders, initialStamp, table, sitting }) {
     const [orders, setOrders] = useState(initialOrders);
     const [problem, setProblem] = useState(''); // '' | 'NO_TABLE' | 'FULL'
     const [offline, setOffline] = useState(false);
     const [showPay, setShowPay] = useState(false);
+    const [paid, setPaid] = useState(false); // staff marked the bill as paid
     const stamp = useRef(initialStamp);
 
     // Every 3 seconds: ask the server "has anything changed since <stamp>?". Pauses while the tab is hidden.
@@ -57,10 +59,16 @@ export default function YourOrders({ initialOrders, initialStamp }) {
                     signal: controller.signal,
                 });
                 if (res.status === 401) {
-                    setProblem('NO_TABLE'); // the table was switched off or the visit ended: stop asking
-                    again = false;
-                } else if (res.status === 403) {
-                    setProblem('FULL');
+                    // The table was reset or switched off. If it was reset because the bill was PAID, say so.
+                    const paidNow = await fetch(`/api/payment/status?sitting=${encodeURIComponent(sitting)}`, { cache: 'no-store' })
+                        .then((r) => (r.ok ? r.json() : { paid: false }))
+                        .catch(() => ({ paid: false }));
+                    if (paidNow.paid) {
+                        setPaid(true);
+                        setShowPay(true);
+                    } else {
+                        setProblem('NO_TABLE'); // the visit ended: stop asking
+                    }
                     again = false;
                 } else if (res.ok) {
                     const data = await res.json();
@@ -101,7 +109,7 @@ export default function YourOrders({ initialOrders, initialStamp }) {
         };
     }, []);
 
-    if (problem) {
+    if (problem && !paid) {
         return (
             <div className="mt-16 flex flex-col items-start gap-6">
                 <p className="text-sm text-white/60">
@@ -179,18 +187,10 @@ export default function YourOrders({ initialOrders, initialStamp }) {
                         </div>
                     )}
 
-                    {showPay && payable.length > 0 && (
-                        <div role="status" className="mt-6 border border-white/20 px-4 py-4 text-[13px] text-white/80">
-                            {/* Online payment (Razorpay) can be connected here later. */}
-                            <p>Amount to pay: <span className="font-semibold text-white">{formatRupees(payTotal)}</span></p>
-                            <p className="mt-2 text-[12px] text-white/60">Please pay at the counter and tell us your table number. Online payment is coming soon.</p>
-                        </div>
-                    )}
-
                     <div className="mt-10 flex flex-col gap-3 sm:flex-row">
                         <button
                             type="button"
-                            onClick={() => setShowPay((v) => !v)}
+                            onClick={() => setShowPay(true)}
                             disabled={payable.length === 0}
                             className="w-full cursor-pointer border border-white bg-white py-4 text-center text-[12px] uppercase tracking-[1px] text-black transition-colors duration-500 hover:bg-black hover:text-white disabled:cursor-not-allowed disabled:border-white/30 disabled:bg-transparent disabled:text-white/50"
                         >
@@ -204,6 +204,10 @@ export default function YourOrders({ initialOrders, initialStamp }) {
                         </Link>
                     </div>
                 </>
+            )}
+
+            {showPay && (payable.length > 0 || paid) && (
+                <PayPanel table={table} sitting={sitting} orders={payable} total={payTotal} paid={paid} onClose={() => setShowPay(false)} />
             )}
         </>
     );
