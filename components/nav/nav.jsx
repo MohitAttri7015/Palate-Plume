@@ -23,8 +23,8 @@ const guestLinks = [
 // Only the admin can manage the menu, so only the admin sees this link.
 const adminLinks = [
     { label: 'Location & Hours', href: '/timing' },
-    { label: 'See Orders', href: '/admin/orders' },
     { label: 'Manage Menu', href: '/admin/menu' },
+    { label: 'See Orders', href: '/admin/orders' },
     { label: 'Menu', href: '/menu' },
 ];
 
