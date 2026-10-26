@@ -6,7 +6,7 @@ import QRCode from "qrcode";
 import { getSession } from "@/lib/auth";
 import { connectDB } from "@/lib/db";
 import { LOGIN_PATH, STAFF_HOME } from "@/lib/config";
-import { scanUrl, SITE_URL } from "@/lib/tables";
+import { scanUrl, tableCode, SITE_URL } from "@/lib/tables";
 import Table from "@/models/Table";
 import PrintButton from "@/components/admin/PrintButton";
 
@@ -32,6 +32,7 @@ async function PrintContent() {
             tables.map(async (t) => ({
                 id: String(t._id),
                 number: t.number,
+                code: tableCode(t.token), // for guests who cannot scan: they type the table number and this code
                 svg: await QRCode.toString(scanUrl(t.token), { type: "svg", errorCorrectionLevel: "M", margin: 2, color: { dark: "#000000", light: "#ffffff" } }),
             }))
         );
@@ -57,7 +58,8 @@ async function PrintContent() {
                             <div className="mx-auto my-3 w-full max-w-[220px] [&>svg]:h-auto [&>svg]:w-full" dangerouslySetInnerHTML={{ __html: c.svg }} />
                             <p className="text-3xl font-semibold">Table {c.number}</p>
                             <p className="mt-1 text-xs">Scan to see the menu and order</p>
-                            <p className="mt-1 text-[10px] text-black/50">{SITE_URL.replace(/^https?:\/\//, "")}</p>
+                            <p className="mt-3 text-[10px] text-black/60">Cannot scan? Open {SITE_URL.replace(/^https?:\/\//, "")}, choose &quot;Enter Table #&quot; and type the table number and this code:</p>
+                            <p className="mt-1 text-xl font-semibold tracking-[0.3em]">{c.code}</p>
                         </div>
                     ))}
                 </div>

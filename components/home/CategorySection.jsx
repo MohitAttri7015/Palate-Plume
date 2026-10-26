@@ -57,15 +57,17 @@ function ItemsSlider({ category, currency, canOrder }) {
 
                             <div className="mt-3 flex items-center justify-between">
                                 <span className="text-[13px]">{formatPrice(item.price, currency)}</span>
-                                <button
-                                    type="button"
-                                    draggable={false}
-                                    aria-label={`Add ${item.name} to cart`}
-                                    onClick={() => add(item.id)}
-                                    className="flex h-9 w-9  border border-white/20  items-center justify-center rounded-full bg-black/40 text-white backdrop-blur-sm"
-                                >
-                                    <ShoppingBasket size={20} strokeWidth={1.5} />
-                                </button>
+                                {canOrder && (<>
+                                    <button
+                                        type="button"
+                                        draggable={false}
+                                        aria-label={`Add ${item.name} to cart`}
+                                        onClick={() => add(item.id)}
+                                        className="flex h-9 w-9  border border-white/20  items-center justify-center rounded-full bg-black/40 text-white backdrop-blur-sm"
+                                    >
+                                        <ShoppingBasket size={20} strokeWidth={1.5} />
+                                    </button>
+                                </>)}
                             </div>
                         </div>
                     </li>

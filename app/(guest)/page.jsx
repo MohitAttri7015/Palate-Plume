@@ -36,7 +36,7 @@ export default function Home() {
             <MocktailsDesign />
             <Categories />
             <footer>
-                <Suspense fallBack={<div></div>}>
+                <Suspense fallback={<div></div>}>
                     <FooterWrapper />
                 </Suspense>
             </footer>

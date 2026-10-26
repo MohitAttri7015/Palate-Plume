@@ -21,7 +21,7 @@ async function KitchenOrders() {
   if (!session) redirect(LOGIN_PATH);
 
   return (
-    <main className="min-h-screen bg-neutral-950 px-4 py-8 text-neutral-100 sm:px-6">
+    <main className="min-h-screen bg-neutral-950 px-4 py-8 text-neutral-100 sm:px-6 font-ui">
       <div className="mx-auto max-w-6xl">
         <div className="flex items-start justify-between gap-4">
           <div>
@@ -32,14 +32,10 @@ async function KitchenOrders() {
             </p>
           </div>
           <div className="flex items-center gap-4 text-sm text-neutral-300">
-            {session.role === "admin" && (
-              <Link href="/admin" className="text-amber-500 hover:underline">
-                Back to admin
+              <Link href="/" className="text-amber-500 hover:underline">
+                Back to home
               </Link>
-            )}
-            <Link href="/" className=" hover:underline">
-              Back to home
-            </Link>
+           
           </div>
         </div>
 

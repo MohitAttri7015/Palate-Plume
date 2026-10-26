@@ -25,7 +25,7 @@ const nextConfig = {
       },
     ],
   },
-  allowedDevOrigins: ['192.168.1.6'],
+  allowedDevOrigins: ['192.168.1.8'],
   cacheComponents: true,
   partialPrefetching: true,
   turbopack: {
