@@ -5,6 +5,7 @@ import User from "@/models/User";
 import { createSessionToken, SESSION_COOKIE, SESSION_HOURS, cookieOptions } from "@/lib/token";
 import { retryAfterSeconds, recordFailure, clearFailures } from "@/lib/rateLimit";
 import { homeFor } from "@/lib/config";
+import { GUEST_COOKIE, guestCookieOptions } from "@/lib/guest";
 
 // Used when the username does not exist, so the answer takes the same time
 // as a real check and nobody can discover which usernames exist.
@@ -75,6 +76,8 @@ export async function POST(request) {
 
     const res = json({ ok: true, role: user.role, redirectTo: homeFor(user.role) });
     res.cookies.set(SESSION_COOKIE, token, { ...cookieOptions, maxAge: SESSION_HOURS * 60 * 60 });
+    // This browser may still hold a table (guest) cookie from an earlier QR scan. Staff are not customers, so end it.
+    res.cookies.set(GUEST_COOKIE, "", { ...guestCookieOptions, maxAge: 0 });
     return res;
   } catch (err) {
     console.error("Login error:", err);

@@ -10,7 +10,7 @@ const json = (body, status = 200) => NextResponse.json(body, { status, headers: 
 const PROBLEMS = {
     TABLE_FULL: [403, "This table already has the maximum number of people."],
     EMPTY_CART: [400, "Your cart is empty."],
-    ITEM_UNAVAILABLE: [409, "Some items are no longer available. Please refresh the page and check your cart."],
+    ITEM_UNAVAILABLE: [409, "Some items just sold out and are being removed from your cart. Please check your cart and place the order again."],
     CART_CHANGED: [409, "The cart at your table just changed (someone may have already placed the order). Please check your cart and your orders."],
 };
 

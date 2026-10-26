@@ -1,26 +1,30 @@
 "use client";
-import { useEffect, useRef, useState, useTransition } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 
 export default function LoginForm() {
-    const router = useRouter();
     const passwordRef = useRef(null);
     const [username, setUsername] = useState("");
     const [password, setPassword] = useState("");
     const [showPassword, setShowPassword] = useState(false);
     const [error, setError] = useState("");
     const [submitting, setSubmitting] = useState(false);
-    // isPending stays true while the redirect is in progress and turns false by itself when it
-    // finishes, so the form can never get stuck on "Signing in..." if Next.js keeps this page in memory.
-    const [isPending, startTransition] = useTransition();
-    const loading = submitting || isPending;
+    const loading = submitting;
 
     // After a failed login, put the cursor back in the password box.
     // (This must wait until the form is enabled again, so it runs after the re-render.)
     useEffect(() => {
         if (error && !loading) passwordRef.current?.focus();
     }, [error, loading]);
+
+    // If the browser's Back button brings this page back exactly as it was left, switch "Signing in..." off.
+    useEffect(() => {
+        const onShow = (event) => {
+            if (event.persisted) setSubmitting(false);
+        };
+        window.addEventListener("pageshow", onShow);
+        return () => window.removeEventListener("pageshow", onShow);
+    }, []);
 
     async function handleSubmit(e) {
         e.preventDefault();
@@ -43,19 +47,17 @@ export default function LoginForm() {
                 return;
             }
 
-            // Success: the server has set the session cookie. Go to the right screen.
+            // Success: the server has set the session cookie and ended any customer (table) session of this browser.
+            // A full page load, so nothing from the customer side (like a shared table cart in memory) comes along.
             setPassword(""); // don't keep the password in memory after a successful login
-            setSubmitting(false);
-            startTransition(() => {
-                router.replace(data.redirectTo || "/");
-                router.refresh();
-            });
+            window.location.assign(data.redirectTo || "/");
         } catch {
             setError("Can't reach the server. Check your internet connection and try again.");
             setSubmitting(false);
         }
     }
 
+    
     const inputClass =
         "w-full rounded-lg border border-[#333] bg-transparent px-4 py-3 text-sm text-[#ccc] outline-none transition-colors focus:border-white/50 disabled:opacity-60";
 

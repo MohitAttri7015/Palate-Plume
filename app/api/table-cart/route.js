@@ -1,14 +1,12 @@
 // The shared cart of a table.
-//   GET  /api/table-cart?since=7   -> the phone asks "anything new since version 7?" (every 2 seconds)
+//   GET  /api/table-cart?since=7   -> the phone asks "anything new since version 7?"
 //   POST /api/table-cart           -> the phone says "add one of this" / "remove one" / "clear"
 // WHICH table it is always comes from the signed guest cookie, never from what the browser sends.
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { connectDB } from "@/lib/db";
-import { getGuest } from "@/lib/guest";
 import { MAX_QTY } from "@/lib/cartMath";
+import { requireGuest } from "@/lib/requireGuest";
 import { readCart, changeCart, clearCart } from "@/lib/tableCart";
-import Table from "@/models/Table";
 
 const json = (body, status = 200) => NextResponse.json(body, { status, headers: { "Cache-Control": "no-store" } });
 
@@ -25,20 +23,6 @@ const schema = z.discriminatedUnion("action", [
     }),
     z.object({ action: z.literal("clear") }),
 ]);
-
-// Same check as getValidGuest(), but a database problem becomes a 500 (the phone just tries again)
-// instead of looking like "your table is gone" (which would make the phone drop its shared cart).
-async function requireGuest() {
-    const guest = await getGuest(); // is there a valid signed cookie?
-    if (!guest) return { error: json({ code: "NO_TABLE", error: "Scan the QR code on your table." }, 401) };
-
-    await connectDB();
-    const table = await Table.findOne({ _id: guest.tableId, cafeId: guest.cafeId, isActive: true, epoch: guest.epoch })
-        .select("_id")
-        .lean();
-    if (!table) return { error: json({ code: "NO_TABLE", error: "This table is not active any more." }, 401) };
-    return { guest };
-}
 
 const answer = (result) => {
     if (!result.error) return json(result.state);

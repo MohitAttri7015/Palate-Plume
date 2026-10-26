@@ -118,7 +118,7 @@ export default function Nav({ initialSession = null, isGuest }) {
                         href={user?.role === 'admin' ? '/admin/menu/new' : user?.role === 'staff' ? '/admin/orders' : '/cart'}
                         className="group relative flex h-10 w-10 shrink-0 items-center justify-center"
                     >
-                        {cartCount > 0 && (
+                        {!user && cartCount > 0 && (
                             <span aria-hidden="true" className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-white px-1 text-[10px] font-semibold leading-none text-black">
                                 {cartCount}
                             </span>

@@ -7,6 +7,7 @@ import { TOKEN_PATTERN } from "@/lib/tables";
 import { retryAfterSeconds, recordFailure } from "@/lib/rateLimit";
 import { GUEST_COOKIE, GUEST_HOURS, guestCookieOptions, createGuestToken, verifyGuestToken } from "@/lib/guest";
 import { readCart } from "@/lib/tableCart";
+import { SESSION_COOKIE, verifySessionToken } from "@/lib/token";
 
 const MAX_BAD_SCANS = 15; // wrong codes per computer (per 15 minutes) before we stop answering
 
@@ -15,6 +16,9 @@ const go = (request, path) =>
 
 export async function GET(request, { params }) {
     const { token } = await params;
+    // Logged in as staff or admin? Then this browser is not a customer's, so it gets no table session.
+    // (To try the customer side, open the table link in a private window.)
+    if (await verifySessionToken(request.cookies.get(SESSION_COOKIE)?.value)) return go(request, "/table-staff");
     const ip = request.headers.get("x-forwarded-for")?.split(",")[0].trim() || "unknown";
     const key = `scan:${ip}`;
 

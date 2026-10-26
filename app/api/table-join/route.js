@@ -10,6 +10,7 @@ import { retryAfterSeconds, recordFailure } from "@/lib/rateLimit";
 import { GUEST_COOKIE, GUEST_HOURS, guestCookieOptions } from "@/lib/guest";
 import { CODE_PATTERN, codeMatches } from "@/lib/tables";
 import { seatGuest } from "@/lib/joinTable";
+import { SESSION_COOKIE, verifySessionToken } from "@/lib/token";
 
 const MAX_WRONG = 15; // wrong tries per computer (per 15 minutes). Customers share the cafe Wi-Fi, so this is not tiny.
 const MAX_WRONG_PER_TABLE = 40; // wrong codes for ONE table from all computers together (per 15 minutes)
@@ -19,6 +20,9 @@ const NO_MATCH = "That table number and code do not match. Please check the card
 const json = (body, status = 200) => NextResponse.json(body, { status, headers: { "Cache-Control": "no-store" } });
 
 export async function POST(request) {
+    if (await verifySessionToken(request.cookies.get(SESSION_COOKIE)?.value)) {
+        return json({ error: "You are logged in as staff. Log out first, or use a private window to order as a customer." }, 403);
+    }
     const ip = request.headers.get("x-forwarded-for")?.split(",")[0].trim() || "unknown";
     const ipKey = `join:${ip}`;
 

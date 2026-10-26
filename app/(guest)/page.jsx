@@ -12,13 +12,14 @@ import { getValidGuest } from "@/lib/guest"
 
 async function NavbarWrapper() {
     const session = await getSession();
-    const isGuest = await getValidGuest();
-    return <Nav initialSession={session} isGuest={isGuest} />;
+    const guest = await getValidGuest();
+    return <Nav initialSession={session} isGuest={Boolean(guest)} />;
 }
 
 async function FooterWrapper() {
     const session = await getSession();
-    return <Footer initialSession={session} />;
+    const guest = await getValidGuest();
+    return <Footer initialSession={session} isGuest={Boolean(guest)} />;
 }
 
 

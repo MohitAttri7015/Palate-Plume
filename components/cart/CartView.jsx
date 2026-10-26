@@ -53,6 +53,8 @@ export default function CartView({ tableNumber }) {
     const loading = idsKey !== '' && quote.key !== idsKey && failedKey !== idsKey;
     const failed = idsKey !== '' && failedKey === idsKey;
     const totalPaise = items.reduce((sum, i) => sum + (quote.lines[i.id]?.unitPaise ?? 0) * i.qty, 0);
+    // Waits for something, but never longer than `ms`, so a slow network can never leave a button stuck.
+    const within = (promise, ms) => Promise.race([promise, new Promise((resolve) => setTimeout(resolve, ms))]);
 
     // The order button only works for a phone that sits at a table, once the prices have loaded.
     const canOrder = atTable && !tableFull && !loading && !failed && items.length > 0 && !placing;
@@ -62,16 +64,16 @@ export default function CartView({ tableNumber }) {
         placingRef.current = true;
         setPlacing(true);
         setOrderError('');
-        if (data.code === 'ITEM_UNAVAILABLE') setRecheck((n) => n + 1); // something just sold out: find it and remove it
         try {
             const res = await fetch('/api/orders', { method: 'POST' });
             const data = await res.json().catch(() => ({}));
             if (!res.ok) {
                 setOrderError(data.error || 'We could not place your order. Please try again.');
-                await refresh();
+                if (data.code === 'ITEM_UNAVAILABLE') setRecheck((n) => n + 1); // something just sold out: find it and remove it
+                await within(refresh(), 4000);
                 return;
             }
-            await refresh(); // the cart is empty now, on every phone at the table
+            await within(refresh(), 4000); // the cart is empty now, on every phone at the table
             router.push('/yourOrder');
         } catch {
             setOrderError('No connection. Please try again.');
@@ -94,7 +96,7 @@ export default function CartView({ tableNumber }) {
                         aria-label="Close the menu"
                         className="relative flex cursor-pointer shrink-0 items-center justify-center border border-[#26262E] rounded-full p-2 h-fit"
                     >
-                        <X size={20} strokeWidth={1.75} nonScalingStroke className="text-white" />
+                        <X size={20} strokeWidth={1.75} absoluteStrokeWidth className="text-white" />
                     </Link>
                 </div>
 
