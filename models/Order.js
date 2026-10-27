@@ -31,5 +31,6 @@ const OrderSchema = new mongoose.Schema(
 
 OrderSchema.index({ tableId: 1, sitting: 1, createdAt: 1 }); // the "Your order" page
 OrderSchema.index({ cafeId: 1, status: 1, updatedAt: -1 }); // the kitchen board
+OrderSchema.index({ cafeId: 1, createdAt: -1 }); // the history tab
 
 export default mongoose.models.Order || mongoose.model("Order", OrderSchema, "orders");

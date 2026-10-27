@@ -18,10 +18,38 @@ const BADGE = {
     cancelled: 'border-red-500/60 text-red-300',
 };
 
+// One paid bill (used by "Paid today" and "All payments").
+function PaymentCard({ p, showDay }) {
+    return (
+        <li className="rounded-xl border border-neutral-800 bg-neutral-900 p-4 text-sm">
+            <div className="flex flex-wrap items-baseline justify-between gap-2">
+                <span className="text-base font-semibold">Table {p.tableNumber}</span>
+                <span className="text-neutral-400">
+                    {showDay && `${new Date(p.at).toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata', day: 'numeric', month: 'short', year: 'numeric' })} · `}
+                    {timeOf(p.at)}
+                </span>
+            </div>
+            <ul className="mt-2 flex flex-col gap-1 text-neutral-300">
+                {p.items.map((l) => (
+                    <li key={`${l.name}-${l.unitPaise}`}>{l.qty} × {l.name}</li>
+                ))}
+            </ul>
+            <div className="mt-3 flex flex-wrap items-baseline justify-between gap-2 border-t border-neutral-800 pt-3">
+                <span className="text-neutral-400">
+                    {p.method.toUpperCase()}{p.payer ? ` · from ${p.payer}` : ''} · marked by {p.paidBy || 'staff'}
+                </span>
+                <span className="text-lg font-semibold">{formatRupees(p.totalPaise)}</span>
+            </div>
+        </li>
+    );
+}
+
 export default function BillsBoard() {
     const [tab, setTab] = useState('tables'); // 'tables' | 'paid'
     const [tables, setTables] = useState(null);
     const [history, setHistory] = useState(null);
+    const [all, setAll] = useState(null); // 'All payments' tab: { payments, next, summary }
+    const [loadingAll, setLoadingAll] = useState(false);
     const [offline, setOffline] = useState(false);
     const [dialog, setDialog] = useState(null); // { type: 'paid' | 'reset', table }
     const [busy, setBusy] = useState(false);
@@ -31,6 +59,7 @@ export default function BillsBoard() {
     const stamp = useRef('');
 
     const load = useCallback(async (force = false) => {
+        if (tab === 'all') return; // the All payments tab is loaded by loadAll, not every 3 seconds
         try {
             if (tab === 'paid') {
                 const res = await fetch('/api/admin/bills?view=paid', { cache: 'no-store' });
@@ -50,6 +79,30 @@ export default function BillsBoard() {
             setOffline(true);
         }
     }, [tab]);
+
+    // All payments: 30 at a time, newest first. more = true adds the next 30.
+    const loadAll = useCallback(async (more = false) => {
+        setLoadingAll(true);
+        try {
+            const params = new URLSearchParams({ view: 'all' });
+            if (more && all?.next) params.set('before', all.next);
+            const res = await fetch(`/api/admin/bills?${params}`, { cache: 'no-store' });
+            if (!res.ok) return setOffline(true);
+            const data = await res.json();
+            setOffline(false);
+            setAll((old) => (more && old ? { payments: [...old.payments, ...data.payments], next: data.next, summary: old.summary } : data));
+        } catch {
+            setOffline(true);
+        } finally {
+            setLoadingAll(false);
+        }
+    }, [all]);
+
+    // Opening the All payments tab loads its first page.
+    useEffect(() => {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        if (tab === 'all' && all === null) loadAll(false);
+    }, [tab, all, loadAll]);
 
     // Ask every 3 seconds. Pauses while the tab is hidden.
     useEffect(() => {
@@ -107,6 +160,7 @@ export default function BillsBoard() {
             <div className="flex flex-wrap gap-3">
                 {tabBtn('tables', 'Tables')}
                 {tabBtn('paid', 'Paid today')}
+                {tabBtn('all', 'All payments')}
             </div>
 
             {offline && <p role="status" className="mt-4 rounded border border-neutral-700 px-4 py-2 text-sm text-neutral-300">Reconnecting... the numbers below may be a few seconds old.</p>}
@@ -197,26 +251,45 @@ export default function BillsBoard() {
                         ) : (
                             <ul className="mt-4 flex flex-col gap-3">
                                 {history.payments.map((p) => (
-                                    <li key={p.id} className="rounded-xl border border-neutral-800 bg-neutral-900 p-4 text-sm">
-                                        <div className="flex flex-wrap items-baseline justify-between gap-2">
-                                            <span className="text-base font-semibold">Table {p.tableNumber}</span>
-                                            <span className="text-neutral-400">{timeOf(p.at)}</span>
-                                        </div>
-                                        <ul className="mt-2 flex flex-col gap-1 text-neutral-300">
-                                            {p.items.map((l) => (
-                                                <li key={`${l.name}-${l.unitPaise}`}>{l.qty} × {l.name}</li>
-                                            ))}
-                                        </ul>
-                                        <div className="mt-3 flex flex-wrap items-baseline justify-between gap-2 border-t border-neutral-800 pt-3">
-                                            <span className="text-neutral-400">
-                                                {p.method.toUpperCase()}{p.payer ? ` · from ${p.payer}` : ''} · marked by {p.paidBy || 'staff'}
-                                            </span>
-                                            <span className="text-lg font-semibold">{formatRupees(p.totalPaise)}</span>
-                                        </div>
-                                    </li>
+                                    <PaymentCard key={p.id} p={p} />
                                 ))}
                             </ul>
                         )}
+                    </>
+                )
+            )}
+
+            {/* ───────── all payments (every day) ───────── */}
+            {tab === 'all' && (
+                all === null ? (
+                    <p className="mt-8 text-sm text-neutral-400">Loading...</p>
+                ) : (
+                    <>
+                        <div className="mt-6 flex items-baseline justify-between rounded-xl border border-neutral-800 bg-neutral-900 px-4 py-3">
+                            <span className="text-xs uppercase tracking-widest text-neutral-400">
+                                All time ({all.summary?.count ?? 0} {all.summary?.count === 1 ? 'bill' : 'bills'})
+                            </span>
+                            <span className="text-2xl font-semibold text-emerald-300">{formatRupees(all.summary?.totalPaise ?? 0)}</span>
+                        </div>
+                        {all.payments.length === 0 ? (
+                            <p className="mt-6 text-sm text-neutral-400">No payments yet.</p>
+                        ) : (
+                            <ul className="mt-4 flex flex-col gap-3">
+                                {all.payments.map((p) => (
+                                    <PaymentCard key={p.id} p={p} showDay />
+                                ))}
+                            </ul>
+                        )}
+                        <div className="mt-6 flex justify-center gap-3">
+                            {all.next && (
+                                <button type="button" onClick={() => loadAll(true)} disabled={loadingAll} className="cursor-pointer rounded-full border border-neutral-600 px-6 py-2 text-sm hover:border-neutral-300 disabled:opacity-50">
+                                    {loadingAll ? 'Loading...' : 'Load older payments'}
+                                </button>
+                            )}
+                            <button type="button" onClick={() => { setAll(null); }} disabled={loadingAll} className="cursor-pointer rounded-full border border-neutral-700 px-6 py-2 text-sm text-neutral-300 hover:border-neutral-400 disabled:opacity-50">
+                                Refresh
+                            </button>
+                        </div>
                     </>
                 )
             )}

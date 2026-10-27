@@ -32,6 +32,12 @@ export async function GET(request) {
 
         const params = new URL(request.url).searchParams;
         if (params.get("view") === "paid") return json(await paidHistory(session.cafeId));
+        if (params.get("view") === "all") {
+            const raw = params.get("before");
+            const before = raw ? new Date(raw) : null;
+            if (before && Number.isNaN(before.getTime())) return json({ error: "Bad request." }, 400);
+            return json(await paidHistory(session.cafeId, { all: true, before }));
+        }
 
         const tables = await tableBoard(session.cafeId);
         const stamp = stampOf(JSON.stringify(tables));

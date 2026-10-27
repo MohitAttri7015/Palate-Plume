@@ -2,6 +2,8 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { NEXT, STATUS_INFO } from '@/lib/orderStatus';
+import OrderHistory from '@/components/admin/OrderHistory';
+
 
 const POLL_MS = 3000;
 const SOUND_KEY = 'pp_kitchen_sound'; // only saved when the kitchen switches the voice alerts OFF on this device
@@ -28,6 +30,7 @@ function sentenceFor(order) {
 }
 
 export default function KitchenBoard() {
+    const [tab, setTab] = useState('today'); // 'today' | 'history'
     const [orders, setOrders] = useState(null); // null = first load
     const [busy, setBusy] = useState('');       // id of the order being changed
     const [message, setMessage] = useState('');
@@ -101,50 +104,51 @@ export default function KitchenBoard() {
     );
 
 
-        const wakeVoice = useCallback(() => {
-            const synth = window.speechSynthesis;
-            if (!synth || typeof SpeechSynthesisUtterance === 'undefined') return;
-            if (Date.now() - lastPrime.current < 1500) return; // not on every single touch event
-            lastPrime.current = Date.now();
-            try {
-                if (synth.paused) synth.resume();
-                const quiet = new SpeechSynthesisUtterance('ok');
-                quiet.volume = 0;
-                quiet.onstart = () => setSpeechOk(true);
-                const done = () => live.current.delete(quiet);
-                quiet.onend = done;
-                quiet.onerror = done;
-                live.current.add(quiet);
-                synth.speak(quiet);
-            } catch {
-                // no voice on this device: the chime is used instead
-            }
-        }, []);
+    const wakeVoice = useCallback(() => {
+        const synth = window.speechSynthesis;
+        if (!synth || typeof SpeechSynthesisUtterance === 'undefined') return;
+        if (Date.now() - lastPrime.current < 1500) return; // not on every single touch event
+        lastPrime.current = Date.now();
+        try {
+            if (synth.paused) synth.resume();
+            const quiet = new SpeechSynthesisUtterance('ok');
+            quiet.volume = 0;
+            quiet.onstart = () => setSpeechOk(true);
+            const done = () => live.current.delete(quiet);
+            quiet.onend = done;
+            quiet.onerror = done;
+            live.current.add(quiet);
+            synth.speak(quiet);
+        } catch {
+            // no voice on this device: the chime is used instead
+        }
+    }, []);
 
-        // Starts the sound and the voice. Browsers allow this only inside a tap or click, so it is called from those.
-        const unlock = useCallback(async () => {
-            wakeVoice();
-            const Ctx = window.AudioContext || window.webkitAudioContext;
-            if (!Ctx) {
-                setUnlocked(true);
-                return;
-            }
-            if (!audio.current) {
-                const ctx = new Ctx();
-                ctx.onstatechange = () => setUnlocked(ctx.state === 'running'); // the browser may pause it again later
-                audio.current = ctx;
-            }
-            try {
-                await audio.current.resume();
-            } catch {
-                // not allowed yet: the next tap tries again
-            }
-            setUnlocked(audio.current.state === 'running');
-        }, [wakeVoice]);
+    // Starts the sound and the voice. Browsers allow this only inside a tap or click, so it is called from those.
+    const unlock = useCallback(async () => {
+        wakeVoice();
+        const Ctx = window.AudioContext || window.webkitAudioContext;
+        if (!Ctx) {
+            setUnlocked(true);
+            return;
+        }
+        if (!audio.current) {
+            const ctx = new Ctx();
+            ctx.onstatechange = () => setUnlocked(ctx.state === 'running'); // the browser may pause it again later
+            audio.current = ctx;
+        }
+        try {
+            await audio.current.resume();
+        } catch {
+            // not allowed yet: the next tap tries again
+        }
+        setUnlocked(audio.current.state === 'running');
+    }, [wakeVoice]);
 
     // Voice alerts are ON by default. We only remember it if the kitchen switched them off on this device.
     useEffect(() => {
         try {
+            // eslint-disable-next-line react-hooks/set-state-in-effect
             if (localStorage.getItem(SOUND_KEY) === 'off') setSoundOn(false);
         } catch {
             // storage blocked: the alerts just stay on
@@ -158,6 +162,7 @@ export default function KitchenBoard() {
         try {
             const saved = localStorage.getItem(VOICE_KEY) || '';
             voiceRef.current = saved;
+            // eslint-disable-next-line react-hooks/set-state-in-effect
             setVoiceName(saved);
         } catch {
             // storage blocked: the automatic voice is used
@@ -375,100 +380,117 @@ export default function KitchenBoard() {
 
     return (
         <div className="mt-6">
-            <div className="flex flex-wrap items-center gap-3">
-                <button
-                    type="button"
-                    onClick={toggleSound}
-                    className={`cursor-pointer rounded-full border px-4 py-1.5 text-xs ${soundStyle}`}
-                >
-                    {soundLabel}
-                </button>
-                {voices.length > 0 && (
-                    <select
-                        value={voiceName}
-                        onChange={chooseVoice}
-                        aria-label="Voice for new order alerts"
-                        className="max-w-[16rem] rounded-full border border-white/20 bg-neutral-900 px-3 py-1.5 text-xs text-neutral-200"
+            <div className="flex flex-wrap gap-3">
+                {[['today', "Today's orders"], ['history', 'History']].map(([id, label]) => (
+                    <button
+                        key={id}
+                        type="button"
+                        onClick={() => setTab(id)}
+                        className={`cursor-pointer rounded-full border px-5 py-2 text-sm transition-colors ${tab === id ? 'border-amber-500 bg-amber-500 text-black' : 'border-neutral-700 text-neutral-300 hover:border-neutral-400'}`}
                     >
-                        <option value="">Automatic voice</option>
-                        {voices.map((v) => (
-                            <option key={`${v.name}-${v.lang}`} value={v.name}>
-                                {v.name} ({v.lang})
-                            </option>
+                        {label}
+                    </button>
+                ))}
+            </div>
+
+            {/* The board stays alive (hidden) on the History tab, so new orders are still announced. */}
+            <div hidden={tab !== 'today'}>
+                <div className="mt-6 flex flex-wrap items-center gap-3">
+                    <button
+                        type="button"
+                        onClick={toggleSound}
+                        className={`cursor-pointer rounded-full border px-4 py-1.5 text-xs ${soundStyle}`}
+                    >
+                        {soundLabel}
+                    </button>
+                    {voices.length > 0 && (
+                        <select
+                            value={voiceName}
+                            onChange={chooseVoice}
+                            aria-label="Voice for new order alerts"
+                            className="max-w-[16rem] rounded-full border border-white/20 bg-neutral-900 px-3 py-1.5 text-xs text-neutral-200"
+                        >
+                            <option value="">Automatic voice</option>
+                            {voices.map((v) => (
+                                <option key={`${v.name}-${v.lang}`} value={v.name}>
+                                    {v.name} ({v.lang})
+                                </option>
+                            ))}
+                        </select>
+                    )}
+                    <button
+                        type="button"
+                        onClick={testVoice}
+                        className="cursor-pointer rounded-full border border-white/20 px-4 py-1.5 text-xs text-neutral-300 hover:border-white/50"
+                    >
+                        Test voice
+                    </button>
+                    {offline && <span role="status" className="text-xs text-neutral-400">Reconnecting...</span>}
+                </div>
+
+                {message && <p role="alert" className="mt-4 rounded-lg border border-red-400/40 px-4 py-3 text-sm text-red-200">{message}</p>}
+
+                <div className="mt-6 grid gap-6 lg:grid-cols-3">
+                    {COLUMNS.map((status) => {
+                        const list = byStatus(status);
+                        return (
+                            <section key={status} aria-label={STATUS_INFO[status].label}>
+                                <h2 className="flex items-center justify-between text-xs font-medium uppercase tracking-[0.2em] text-amber-500">
+                                    {STATUS_INFO[status].label}
+                                    <span className="rounded-full bg-white/10 px-2 py-0.5 text-neutral-200">{list.length}</span>
+                                </h2>
+                                <ul className="mt-3 flex flex-col gap-3">
+                                    {list.length === 0 && <li className="rounded-xl border border-dashed border-white/10 p-4 text-sm text-neutral-500">Nothing here</li>}
+                                    {list.map((order) => (
+                                        <li key={order.id} className={`rounded-xl border bg-neutral-900 p-4 ${status === 'pending' ? 'border-amber-500/60' : 'border-white/10'}`}>
+                                            <div className="flex items-baseline justify-between">
+                                                <p className="text-2xl font-semibold">Table {order.tableNumber}</p>
+                                                <p suppressHydrationWarning className="text-xs text-neutral-400">
+                                                    {clock(order.createdAt)} · {minutesAgo(order.createdAt, now)} min ago
+                                                </p>
+                                            </div>
+                                            <ul className="mt-3 flex flex-col gap-1 text-sm">
+                                                {order.items.map((line, i) => (
+                                                    <li key={`${line.name}-${i}`}><span className="font-semibold">{line.qty} ×</span> {line.name}</li>
+                                                ))}
+                                            </ul>
+                                            <div className="mt-4 flex gap-2">
+                                                {NEXT[status].map((to) => (
+                                                    <button
+                                                        key={to}
+                                                        type="button"
+                                                        disabled={busy === order.id}
+                                                        onClick={() => move(order, to)}
+                                                        className={`cursor-pointer rounded-lg px-3 py-2 text-xs font-medium disabled:cursor-not-allowed disabled:opacity-50 ${to === 'cancelled'
+                                                            ? 'border border-red-400/40 text-red-200 hover:bg-red-400/10'
+                                                            : 'flex-1 bg-amber-500 text-black hover:bg-amber-400'}`}
+                                                    >
+                                                        {ACTION[to]}
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        </li>
+                                    ))}
+                                </ul>
+                            </section>
+                        );
+                    })}
+                </div>
+
+                <section className="mt-10" aria-label="Finished orders">
+                    <h2 className="text-xs font-medium uppercase tracking-[0.2em] text-neutral-400">Finished (last 20)</h2>
+                    <ul className="mt-3 flex flex-col divide-y divide-white/10 rounded-xl border border-white/10">
+                        {finished.length === 0 && <li className="p-4 text-sm text-neutral-500">No finished orders yet.</li>}
+                        {finished.map((order) => (
+                            <li key={order.id} className="flex items-center justify-between gap-3 px-4 py-3 text-sm">
+                                <span>Table {order.tableNumber} · {order.items.map((l) => `${l.qty}× ${l.name}`).join(', ')}</span>
+                                <span className={`shrink-0 text-xs ${order.status === 'cancelled' ? 'text-red-300' : 'text-emerald-300'}`}>{STATUS_INFO[order.status].label}</span>
+                            </li>
                         ))}
-                    </select>
-                )}
-                <button
-                    type="button"
-                    onClick={testVoice}
-                    className="cursor-pointer rounded-full border border-white/20 px-4 py-1.5 text-xs text-neutral-300 hover:border-white/50"
-                >
-                    Test voice
-                </button>
-                {offline && <span role="status" className="text-xs text-neutral-400">Reconnecting...</span>}
+                    </ul>
+                </section>
             </div>
-
-            {message && <p role="alert" className="mt-4 rounded-lg border border-red-400/40 px-4 py-3 text-sm text-red-200">{message}</p>}
-
-            <div className="mt-6 grid gap-6 lg:grid-cols-3">
-                {COLUMNS.map((status) => {
-                    const list = byStatus(status);
-                    return (
-                        <section key={status} aria-label={STATUS_INFO[status].label}>
-                            <h2 className="flex items-center justify-between text-xs font-medium uppercase tracking-[0.2em] text-amber-500">
-                                {STATUS_INFO[status].label}
-                                <span className="rounded-full bg-white/10 px-2 py-0.5 text-neutral-200">{list.length}</span>
-                            </h2>
-                            <ul className="mt-3 flex flex-col gap-3">
-                                {list.length === 0 && <li className="rounded-xl border border-dashed border-white/10 p-4 text-sm text-neutral-500">Nothing here</li>}
-                                {list.map((order) => (
-                                    <li key={order.id} className={`rounded-xl border bg-neutral-900 p-4 ${status === 'pending' ? 'border-amber-500/60' : 'border-white/10'}`}>
-                                        <div className="flex items-baseline justify-between">
-                                            <p className="text-2xl font-semibold">Table {order.tableNumber}</p>
-                                            <p suppressHydrationWarning className="text-xs text-neutral-400">
-                                                {clock(order.createdAt)} · {minutesAgo(order.createdAt, now)} min ago
-                                            </p>
-                                        </div>
-                                        <ul className="mt-3 flex flex-col gap-1 text-sm">
-                                            {order.items.map((line, i) => (
-                                                <li key={`${line.name}-${i}`}><span className="font-semibold">{line.qty} ×</span> {line.name}</li>
-                                            ))}
-                                        </ul>
-                                        <div className="mt-4 flex gap-2">
-                                            {NEXT[status].map((to) => (
-                                                <button
-                                                    key={to}
-                                                    type="button"
-                                                    disabled={busy === order.id}
-                                                    onClick={() => move(order, to)}
-                                                    className={`cursor-pointer rounded-lg px-3 py-2 text-xs font-medium disabled:cursor-not-allowed disabled:opacity-50 ${to === 'cancelled'
-                                                        ? 'border border-red-400/40 text-red-200 hover:bg-red-400/10'
-                                                        : 'flex-1 bg-amber-500 text-black hover:bg-amber-400'}`}
-                                                >
-                                                    {ACTION[to]}
-                                                </button>
-                                            ))}
-                                        </div>
-                                    </li>
-                                ))}
-                            </ul>
-                        </section>
-                    );
-                })}
-            </div>
-
-            <section className="mt-10" aria-label="Finished orders">
-                <h2 className="text-xs font-medium uppercase tracking-[0.2em] text-neutral-400">Finished (last 20)</h2>
-                <ul className="mt-3 flex flex-col divide-y divide-white/10 rounded-xl border border-white/10">
-                    {finished.length === 0 && <li className="p-4 text-sm text-neutral-500">No finished orders yet.</li>}
-                    {finished.map((order) => (
-                        <li key={order.id} className="flex items-center justify-between gap-3 px-4 py-3 text-sm">
-                            <span>Table {order.tableNumber} · {order.items.map((l) => `${l.qty}× ${l.name}`).join(', ')}</span>
-                            <span className={`shrink-0 text-xs ${order.status === 'cancelled' ? 'text-red-300' : 'text-emerald-300'}`}>{STATUS_INFO[order.status].label}</span>
-                        </li>
-                    ))}
-                </ul>
-            </section>
+            {tab === 'history' && <OrderHistory />}
         </div>
     );
 }

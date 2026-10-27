@@ -7,7 +7,7 @@ import { z } from "zod";
 import { requireStaff } from "@/lib/requireStaff";
 import { isObjectIdString } from "@/lib/validation";
 import { STATUSES } from "@/lib/orderStatus";
-import { ordersForKitchen, shapeOrder, stampOf, changeOrderStatus } from "@/lib/orders";
+import { ordersForKitchen, ordersHistory, shapeOrder, stampOf, changeOrderStatus } from "@/lib/orders";
 
 const json = (body, status = 200) => NextResponse.json(body, { status, headers: { "Cache-Control": "no-store" } });
 
@@ -17,9 +17,18 @@ export async function GET(request) {
     const { session, error } = await requireStaff();
     if (error) return error;
     try {
+        const params = new URL(request.url).searchParams;
+        if (params.get("view") === "history") {
+            const raw = params.get("before");
+            const before = raw ? new Date(raw) : null;
+            const status = params.get("status");
+            if ((before && Number.isNaN(before.getTime())) || (status && !STATUSES.includes(status))) return json({ error: "Bad request." }, 400);
+            return json(await ordersHistory(session.cafeId, { before, status }));
+        }
+
         const orders = await ordersForKitchen(session.cafeId);
         const stamp = stampOf(orders);
-        if (new URL(request.url).searchParams.get("since") === stamp) return json({ unchanged: true });
+        if (params.get("since") === stamp) return json({ unchanged: true });
         return json({ stamp, orders: orders.map(shapeOrder) });
     } catch (err) {
         console.error("Kitchen orders error:", err);
