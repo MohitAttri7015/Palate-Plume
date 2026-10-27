@@ -37,7 +37,11 @@ export default function KitchenBoard() {
     const [unlocked, setUnlocked] = useState(false); // browsers only allow sound after one tap or click on the page
     const stamp = useRef('');
     const audio = useRef(null);
-    const primed = useRef(false);
+    const lastPrime = useRef(0); // when we last tried to wake the voice up
+    const live = useRef(new Set()); // spoken sentences are kept here until they finish
+    const [speechOk, setSpeechOk] = useState(
+        () => typeof window !== 'undefined' && !(window.speechSynthesis && typeof SpeechSynthesisUtterance !== 'undefined')
+    ); // true once the voice has really started (or this device has none)
     const knownPending = useRef(null); // ids of the pending orders we have already seen (null until the first load)
     const pollRef = useRef(null);
     const soundRef = useRef(true);
@@ -66,6 +70,7 @@ export default function KitchenBoard() {
     const speak = useCallback((text) => {
         const synth = window.speechSynthesis;
         if (!synth || typeof SpeechSynthesisUtterance === 'undefined') return false;
+        if (synth.paused) synth.resume();
         const sentence = new SpeechSynthesisUtterance(text);
         const chosen = synth.getVoices().find((v) => v.name === voiceRef.current);
         if (chosen) {
@@ -77,6 +82,10 @@ export default function KitchenBoard() {
         sentence.rate = VOICE_RATE;
         sentence.pitch = VOICE_PITCH;
         sentence.volume = VOICE_VOLUME;
+        live.current.add(sentence);
+        const done = () => live.current.delete(sentence);
+        sentence.onend = done;
+        sentence.onerror = done;
         synth.speak(sentence); // several orders at once are simply read one after the other
         return true;
     }, []);
@@ -84,43 +93,54 @@ export default function KitchenBoard() {
     // New orders arrived: read each one out loud. If this device cannot speak, a beep is played instead.
     const announce = useCallback(
         (newOrders) => {
-            const spoken = newOrders.map((order) => speak(sentenceFor(order)));
-            if (!spoken.some(Boolean)) beep();
+            beep(); // a short chime first, so the kitchen hears something even if the voice is silent
+            const canSpeak = Boolean(window.speechSynthesis) && typeof SpeechSynthesisUtterance !== 'undefined';
+            if (canSpeak) setTimeout(() => newOrders.forEach((order) => speak(sentenceFor(order))), 450);
         },
         [beep, speak]
     );
 
-    // Starts the sound and the voice. Browsers allow this only inside a tap or click, so it is called from those.
-    const unlock = useCallback(async () => {
-        if (!primed.current) {
-            primed.current = true;
+
+        const wakeVoice = useCallback(() => {
+            const synth = window.speechSynthesis;
+            if (!synth || typeof SpeechSynthesisUtterance === 'undefined') return;
+            if (Date.now() - lastPrime.current < 1500) return; // not on every single touch event
+            lastPrime.current = Date.now();
             try {
-                if (window.speechSynthesis && typeof SpeechSynthesisUtterance !== 'undefined') {
-                    const quiet = new SpeechSynthesisUtterance(' ');
-                    quiet.volume = 0;
-                    window.speechSynthesis.speak(quiet); // wakes the voice up
-                }
+                if (synth.paused) synth.resume();
+                const quiet = new SpeechSynthesisUtterance('ok');
+                quiet.volume = 0;
+                quiet.onstart = () => setSpeechOk(true);
+                const done = () => live.current.delete(quiet);
+                quiet.onend = done;
+                quiet.onerror = done;
+                live.current.add(quiet);
+                synth.speak(quiet);
             } catch {
-                // no voice on this device: the beep is used instead
+                // no voice on this device: the chime is used instead
             }
-        }
-        const Ctx = window.AudioContext || window.webkitAudioContext;
-        if (!Ctx) {
-            setUnlocked(true);
-            return;
-        }
-        if (!audio.current) {
-            const ctx = new Ctx();
-            ctx.onstatechange = () => setUnlocked(ctx.state === 'running'); // the browser may pause it again later
-            audio.current = ctx;
-        }
-        try {
-            await audio.current.resume();
-        } catch {
-            // not allowed yet: the next tap tries again
-        }
-        setUnlocked(audio.current.state === 'running');
-    }, []);
+        }, []);
+
+        // Starts the sound and the voice. Browsers allow this only inside a tap or click, so it is called from those.
+        const unlock = useCallback(async () => {
+            wakeVoice();
+            const Ctx = window.AudioContext || window.webkitAudioContext;
+            if (!Ctx) {
+                setUnlocked(true);
+                return;
+            }
+            if (!audio.current) {
+                const ctx = new Ctx();
+                ctx.onstatechange = () => setUnlocked(ctx.state === 'running'); // the browser may pause it again later
+                audio.current = ctx;
+            }
+            try {
+                await audio.current.resume();
+            } catch {
+                // not allowed yet: the next tap tries again
+            }
+            setUnlocked(audio.current.state === 'running');
+        }, [wakeVoice]);
 
     // Voice alerts are ON by default. We only remember it if the kitchen switched them off on this device.
     useEffect(() => {
@@ -147,7 +167,15 @@ export default function KitchenBoard() {
         const load = () => setVoices(synth.getVoices().filter((v) => VOICE_LANGS.test(v.lang)));
         load();
         synth.addEventListener('voiceschanged', load);
-        return () => synth.removeEventListener('voiceschanged', load);
+        let tries = 0;
+        const retry = setInterval(() => {
+            load();
+            if (synth.getVoices().length > 0 || ++tries >= 10) clearInterval(retry);
+        }, 500);
+        return () => {
+            clearInterval(retry);
+            synth.removeEventListener('voiceschanged', load);
+        };
     }, []);
 
     function chooseVoice(event) {
@@ -160,13 +188,14 @@ export default function KitchenBoard() {
             // storage blocked: the choice just is not remembered
         }
         window.speechSynthesis?.cancel();
-        speak(sentenceFor(SAMPLE_ORDER)); // so the kitchen hears the new voice straight away
+        setTimeout(() => speak(sentenceFor(SAMPLE_ORDER)), 120);
     }
 
     async function testVoice() {
         await unlock(); // this tap also unlocks sound
         window.speechSynthesis?.cancel();
-        if (!speak(sentenceFor(SAMPLE_ORDER))) beep();
+        beep();
+        setTimeout(() => speak(sentenceFor(SAMPLE_ORDER)), 450);
     }
 
     // Until the sound is unlocked, the first tap / click / key press anywhere on the page unlocks it.
